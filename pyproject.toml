@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "yard-football-manager"
+version = "0.1.0"
+description = ""
+authors = ["Evgeny Dyshlyuk <evgeny@deepplanet.ai>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.13.5"
+fastapi = "0.115.14"
+uvicorn = {version = "0.35.0", extras = ["standard"]}
+jinja2 = "3.1.6"
+pydantic = "2.11.7"
+python-multipart = "0.0.20"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
