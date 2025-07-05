@@ -4,9 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/tailwind.css",
-    "watch:css": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/tailwind.css --watch"
+    "build:css": "tailwindcss -i ./app/static/css/tailwind.css -o ./app/static/css/output.css --minify"
   },
   "repository": {
     "type": "git",
