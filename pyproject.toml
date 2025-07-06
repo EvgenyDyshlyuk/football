@@ -10,7 +10,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "3.13.5"
+python = "3.13.3"
 fastapi = "0.115.14"
 uvicorn = { version = "0.35.0", extras = ["standard"] }
 jinja2 = "3.1.6"

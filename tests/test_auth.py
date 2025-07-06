@@ -9,8 +9,12 @@ client = TestClient(app)
 
 
 def test_login_get():
-    response = client.get("/auth/login")
-    assert response.status_code == 200
+    response = client.get("/auth/login", follow_redirects=False)
+    assert response.status_code == 307
+    assert (
+        response.headers.get("location")
+        == "https://eu-west-2wwv3xqgys.auth.eu-west-2.amazoncognito.com/login?client_id=68al97tfenubl3tc3k4fnii8ob&response_type=code&scope=email+openid+phone&redirect_uri=http%3A%2F%2Flocalhost%3A8000"
+    )
 
 
 def test_login_post_valid():
