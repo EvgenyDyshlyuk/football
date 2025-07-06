@@ -30,3 +30,9 @@ def test_login_post_invalid():
     )
     assert response.status_code == 200
     assert "Invalid credentials" in response.text
+
+
+def test_homepage_get():
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "Hello this is homepage" in response.text
