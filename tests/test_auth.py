@@ -7,6 +7,7 @@ from app.main import app
 
 client = TestClient(app)
 
+
 def test_login_get():
     response = client.get("/auth/login")
     assert response.status_code == 200
