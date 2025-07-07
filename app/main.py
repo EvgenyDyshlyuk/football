@@ -1,10 +1,7 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
-from fastapi.responses import HTMLResponse
 
 from app.auth.routes import auth_router
 from app.jinja2_env import templates
-
 
 app = FastAPI()
 

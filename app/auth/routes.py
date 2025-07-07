@@ -32,4 +32,3 @@ async def login_post(form: UserLogin = Depends(login_form)):
         '<p class="text-red-500">Invalid credentials</p>',
         status_code=status.HTTP_200_OK,
     )
-
