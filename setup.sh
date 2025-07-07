@@ -21,8 +21,8 @@ fi
 # Pick Python interpreter: prefer pyenv, else system python3
 if command -v pyenv >/dev/null 2>&1; then
   echo "pyenv detected → installing/using Python 3.13.5"
-  pyenv install -s 3.13.5
-  pyenv local 3.13.5
+  pyenv install -s 3.13.3
+  pyenv local 3.13.3
   PYTHON_PATH="$(pyenv which python)"
 else
   echo "pyenv not found → falling back to system python3"
