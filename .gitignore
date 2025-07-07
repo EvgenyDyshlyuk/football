@@ -205,3 +205,32 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+# === Node / npm ===
+# dependencies
+node_modules/
+
+# optional npm cache directory
+.npm/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env
+.env.local
+.env.*.local
+
+# build output
+dist/
+build/
+
+# lock files (if you’re using a different manager)
+# yarn.lock     # keep this if you use Yarn
+package-lock.json  # keep this if you use npm
+
+# === Python (your boilerplate) ===
+# (existing Python ignores, e.g. __pycache__/, *.py[cod], .venv/, etc.)
