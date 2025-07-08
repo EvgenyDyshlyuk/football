@@ -1,15 +1,23 @@
 """Authentication dependencies used across the application."""
 
 import os
+from pathlib import Path
 from typing import Any, Dict
+
+from dotenv import load_dotenv
 
 import requests
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
 
+if os.getenv("STAGE") == "local" or not os.getenv("AWS_LAMBDA_FUNCTION_NAME"):
+    load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+
 AWS_REGION = os.getenv("AWS_REGION")
-USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
+COGNITO_REGION = os.getenv("COGNITO_REGION")
+COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
+USER_POOL_ID = COGNITO_USER_POOL_ID
 CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 
 jwks_url = f"https://cognito-idp.{AWS_REGION}.amazonaws.com/{USER_POOL_ID}/.well-known/jwks.json"
