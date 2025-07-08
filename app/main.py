@@ -30,22 +30,33 @@ app.include_router(auth_router)
 
 @app.get("/", include_in_schema=False)
 async def root(request: Request) -> Response:
-    """
-    If the user has an Authorization header or a Cognito 'code' param,
-    render home.html; otherwise kick them to the Cognito login URL.
-    """
-    if request.headers.get("Authorization") or request.query_params.get("code"):
+    """Render the homepage if the user has a valid token, otherwise redirect."""
+
+    auth_header = request.headers.get("Authorization")
+    cookie_token = request.cookies.get("access_token")
+
+    if auth_header or cookie_token or request.query_params.get("code"):
         from app.auth.dependencies import get_current_user
 
-        user = None
-        auth_header = request.headers.get("Authorization")
+        token = None
+        scheme = "Bearer"
         if auth_header:
             scheme, _, token = auth_header.partition(" ")
-            if token:
-                creds = HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
-                try:
-                    user = get_current_user(token=creds)
-                except Exception:
-                    user = None
+        else:
+            token = cookie_token
+
+        user = None
+        if token:
+            creds = HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
+            try:
+                user = get_current_user(token=creds)
+            except Exception:
+                return RedirectResponse(
+                    COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT
+                )
+
         return templates.TemplateResponse(request, "home.html", {"user": user})
-    return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+    return RedirectResponse(
+        COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT
+    )

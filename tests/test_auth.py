@@ -61,6 +61,34 @@ def test_homepage_redirect_for_new_user():
     assert response.headers.get("location") == COGNITO_AUTH_URL
 
 
+def test_homepage_cookie_login(monkeypatch):
+    def fake_get(url):
+        class Resp:
+            def json(self_inner):
+                return {"keys": []}
+
+        return Resp()
+
+    monkeypatch.setattr("requests.get", fake_get)
+    monkeypatch.setattr(
+        "app.auth.routes.authenticate_user", lambda u, p: {"IdToken": "abc"}
+    )
+    monkeypatch.setattr(
+        "app.auth.dependencies.get_current_user", lambda token=None: {"sub": "u1"}
+    )
+
+    login_resp = client.post(
+        "/auth/login", data={"username": "good", "password": "pass"}, follow_redirects=False
+    )
+    assert login_resp.status_code == 303
+    cookie = login_resp.cookies.get("access_token")
+    assert cookie == "abc"
+
+    response = client.get("/", cookies={"access_token": cookie})
+    assert response.status_code == 200
+    assert "u1" in response.text
+
+
 def test_get_current_user_valid(monkeypatch):
     secret = "secret"
     jwks = {
