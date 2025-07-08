@@ -17,6 +17,12 @@ This repository uses **Poetry** for Python dependencies and **npm** for front-en
    ```
    This script installs Python (via Poetry) and Node requirements.
 
+   After setup, copy the example environment file:
+   ```bash
+   cp .env.template .env
+   ```
+   Adjust values as needed for your Cognito configuration.
+
 2. **Run tests and linters** before committing:
    ```bash
    poetry run ruff check .
