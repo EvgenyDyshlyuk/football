@@ -126,6 +126,9 @@ def test_callback_flow(monkeypatch):
     assert resp.headers["location"] == "/"
     cookie = resp.cookies.get("access_token")
     assert cookie == "jwt1"
+    # Cookie should not include Secure flag when STAGE is local
+    set_cookie_header = resp.headers.get("set-cookie", "")
+    assert "Secure" not in set_cookie_header
 
     client.cookies.set("access_token", cookie)
     resp2 = client.get("/")
