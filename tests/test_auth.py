@@ -37,6 +37,9 @@ def test_login_post_success(monkeypatch):
     assert response.status_code == 303
     assert response.headers.get("location") == "/"
     assert response.cookies.get("access_token") == "abc"
+    # Cookie should not include the Secure flag in local stage
+    set_cookie_header = response.headers.get("set-cookie", "")
+    assert "Secure" not in set_cookie_header
 
 
 def test_homepage_get(monkeypatch):
