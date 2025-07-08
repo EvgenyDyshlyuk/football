@@ -2,12 +2,11 @@
 
 from typing import Union
 
-from fastapi import APIRouter, Form, Response, status, Request
+from fastapi import APIRouter, Form, Request, Response, status
 from fastapi.responses import RedirectResponse, Response as FastAPIResponse
 
 from app.jinja2_env import templates
 from app.auth.cognito import authenticate_user
-from app.core.config import STAGE
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -20,7 +19,7 @@ async def get_login(request: Request) -> FastAPIResponse:
 
 @auth_router.post("/login")
 async def post_login(
-    response: Response,
+    request: Request,
     username: str = Form(...),
     password: str = Form(...),
 ) -> Union[FastAPIResponse, Response]:
@@ -36,6 +35,6 @@ async def post_login(
         key="access_token",
         value=auth["IdToken"],
         httponly=True,
-        secure=(STAGE != "local"),
+        secure=(request.url.scheme == "https"),
     )
     return redirect
