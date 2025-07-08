@@ -7,7 +7,7 @@ import base64
 import importlib
 import pytest
 
-os.environ.setdefault("AWS_REGION", "us-east-1")
+os.environ.setdefault("AWS_REGION", "eu-west-2")
 os.environ.setdefault("COGNITO_USER_POOL_ID", "dummy_pool")
 os.environ.setdefault("COGNITO_CLIENT_ID", "dummy_client")
 
@@ -105,7 +105,8 @@ def test_get_current_user_invalid(monkeypatch):
     sys.modules.pop("app.auth.dependencies", None)
     dependencies = importlib.import_module("app.auth.dependencies")
 
-    token = jwt.encode({"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]}, "wrong", algorithm="HS256", headers={"kid": "test"})
+    token = jwt.encode({"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]},
+                       "wrong", algorithm="HS256", headers={"kid": "test"})
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
     with pytest.raises(Exception):
         dependencies.get_current_user(token=creds)

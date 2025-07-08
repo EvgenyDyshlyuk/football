@@ -1,4 +1,4 @@
-"""Application entry point for the FastAPI authentication demo."""
+"""Application entry point for the FastAPI application."""
 
 from pathlib import Path
 
