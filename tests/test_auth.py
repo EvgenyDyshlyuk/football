@@ -87,9 +87,11 @@ def test_homepage_cookie_login(monkeypatch):
     cookie = login_resp.cookies.get("access_token")
     assert cookie == "abc"
 
-    response = client.get("/", cookies={"access_token": cookie})
+    client.cookies.set("access_token", cookie)
+    response = client.get("/")
     assert response.status_code == 200
     assert "u1" in response.text
+    client.cookies.clear()
 
 
 def test_get_current_user_valid(monkeypatch):
