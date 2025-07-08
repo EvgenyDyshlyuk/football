@@ -1,7 +1,11 @@
+"""Authentication dependencies used across the application."""
+
 import os
+from typing import Any, Dict
+
 import requests
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
 
 AWS_REGION = os.getenv("AWS_REGION")
@@ -14,9 +18,14 @@ jwks = requests.get(jwks_url).json()
 security = HTTPBearer()
 
 
-def get_current_user(token=Depends(security)):
-    """Validates the Cognito JWT from Authorization header or cookie.
-    Returns the decoded JWT payload or raises 401."""
+def get_current_user(
+    token: HTTPAuthorizationCredentials = Depends(security),
+) -> Dict[str, Any]:
+    """Validate the Cognito JWT from Authorization header or cookie.
+
+    Returns the decoded JWT payload or raises ``HTTPException`` if the
+    token is invalid or expired.
+    """
     credentials = token.credentials
     try:
         header = jwt.get_unverified_header(credentials)

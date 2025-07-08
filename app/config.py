@@ -1,3 +1,5 @@
+"""Configuration loader for AWS Cognito settings."""
+
 from configparser import ConfigParser
 from pathlib import Path
 from urllib.parse import quote_plus

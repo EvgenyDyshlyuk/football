@@ -1,3 +1,5 @@
+"""Jinja2 environment configuration for HTML templates."""
+
 from pathlib import Path
 from fastapi.templating import Jinja2Templates
 

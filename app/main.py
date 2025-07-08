@@ -1,7 +1,9 @@
+"""Application entry point for the FastAPI authentication demo."""
+
 from pathlib import Path
 
 from fastapi import FastAPI, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from app.auth.routes import auth_router
@@ -25,7 +27,7 @@ app.include_router(auth_router)
 
 
 @app.get("/", include_in_schema=False)
-async def root(request: Request):
+async def root(request: Request) -> Response:
     """
     If the user has an Authorization header or a Cognito 'code' param,
     render home.html; otherwise kick them to the Cognito login URL.
