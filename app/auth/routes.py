@@ -7,6 +7,7 @@ from fastapi.responses import RedirectResponse, Response as FastAPIResponse
 
 from app.jinja2_env import templates
 from app.auth.cognito import authenticate_user
+from app.core.config import STAGE
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -35,6 +36,6 @@ async def post_login(
         key="access_token",
         value=auth["IdToken"],
         httponly=True,
-        secure=True,
+        secure=(STAGE != "local"),
     )
     return redirect
