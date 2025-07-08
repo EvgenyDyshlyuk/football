@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials
 
 from app.auth.routes import auth_router
+import app.core.config  # noqa: F401  # Ensure .env is loaded on startup
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
 
