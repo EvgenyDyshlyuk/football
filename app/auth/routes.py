@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Form, Depends, Response, status
+from fastapi import APIRouter, Form, Depends, Response, status, Request
 from fastapi.responses import RedirectResponse
 
 from app.jinja2_env import templates
@@ -8,8 +8,8 @@ auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @auth_router.get("/login")
-async def get_login():
-    return templates.TemplateResponse("auth/login.html", {"request": {}})
+async def get_login(request: Request):
+    return templates.TemplateResponse(request, "auth/login.html")
 
 
 @auth_router.post("/login")

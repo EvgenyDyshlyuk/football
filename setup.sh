@@ -35,18 +35,8 @@ poetry env use "$PYTHON_PATH"
 
 # Initialize pyproject.toml if missing
 if [ ! -f pyproject.toml ]; then
-  poetry init --name yard-football-manager \
-    --python "^3.13" \
-    --dependency fastapi=0.115.14 \
-    --dependency "uvicorn[standard]=0.35.0" \
-    --dependency jinja2=3.1.6 \
-    --dependency pydantic=2.11.7 \
-    --dependency python-multipart=0.0.20 \
-    -n
+  poetry init --name yard-football-manager --python "^3.13" -n
 fi
-
-# Ensure auth dependencies are present
-poetry add python-jose boto3
 
 # Install all Python deps
 poetry install

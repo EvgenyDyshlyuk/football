@@ -31,5 +31,5 @@ async def root(request: Request):
     render home.html; otherwise kick them to the Cognito login URL.
     """
     if request.headers.get("Authorization") or request.query_params.get("code"):
-        return templates.TemplateResponse("home.html", {"request": request})
+        return templates.TemplateResponse(request, "home.html")
     return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
