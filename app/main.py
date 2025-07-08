@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI, Request, status
 from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from fastapi.security import HTTPAuthorizationCredentials
 
 from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
@@ -33,5 +34,17 @@ async def root(request: Request) -> Response:
     render home.html; otherwise kick them to the Cognito login URL.
     """
     if request.headers.get("Authorization") or request.query_params.get("code"):
-        return templates.TemplateResponse(request, "home.html")
+        from app.auth.dependencies import get_current_user
+
+        user = None
+        auth_header = request.headers.get("Authorization")
+        if auth_header:
+            scheme, _, token = auth_header.partition(" ")
+            if token:
+                creds = HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
+                try:
+                    user = get_current_user(token=creds)
+                except Exception:
+                    user = None
+        return templates.TemplateResponse(request, "home.html", {"user": user})
     return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)

@@ -39,10 +39,20 @@ def test_login_post_success(monkeypatch):
     assert response.cookies.get("access_token") == "abc"
 
 
-def test_homepage_get():
+def test_homepage_get(monkeypatch):
+    def fake_get(url):
+        class Resp:
+            def json(self_inner):
+                return {"keys": []}
+
+        return Resp()
+
+    monkeypatch.setattr("requests.get", fake_get)
+    monkeypatch.setattr("app.auth.dependencies.get_current_user", lambda token=None: {"sub": "u1"})
     response = client.get("/", headers={"Authorization": "Bearer token"})
     assert response.status_code == 200
-    assert "Hello this is homepage" in response.text
+    assert "Hello:" in response.text
+    assert "u1" in response.text
 
 
 def test_homepage_redirect_for_new_user():
