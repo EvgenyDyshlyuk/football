@@ -11,6 +11,7 @@ from app.auth.routes import auth_router
 import app.core.config  # noqa: F401  # Ensure .env is loaded on startup
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
+from app.auth.cognito import exchange_code_for_tokens
 
 # Determine this file’s parent dir (i.e. the "app/" folder)
 BASE_DIR = Path(__file__).parent
@@ -34,8 +35,21 @@ async def root(request: Request) -> Response:
 
     auth_header = request.headers.get("Authorization")
     cookie_token = request.cookies.get("access_token")
+    code = request.query_params.get("code")
 
-    if auth_header or cookie_token or request.query_params.get("code"):
+    if code:
+        tokens = exchange_code_for_tokens(code)
+        id_token = tokens.get("id_token") or tokens.get("access_token")
+        redirect = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+        redirect.set_cookie(
+            key="access_token",
+            value=id_token,
+            httponly=True,
+            secure=True,
+        )
+        return redirect
+
+    if auth_header or cookie_token:
         from app.auth.dependencies import get_current_user
 
         token = None

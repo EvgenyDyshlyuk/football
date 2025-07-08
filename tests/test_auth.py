@@ -10,6 +10,9 @@ import pytest
 os.environ.setdefault("AWS_REGION", "eu-west-2")
 os.environ.setdefault("COGNITO_USER_POOL_ID", "dummy_pool")
 os.environ.setdefault("COGNITO_CLIENT_ID", "dummy_client")
+os.environ.setdefault("COGNITO_APP_CLIENT_ID", "dummy_client")
+os.environ.setdefault("COGNITO_APP_CLIENT_SECRET", "dummy_secret")
+os.environ.setdefault("COGNITO_REDIRECT_URI", "http://testserver/")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.main import app
@@ -92,6 +95,41 @@ def test_homepage_cookie_login(monkeypatch):
     assert response.status_code == 200
     assert "u1" in response.text
     client.cookies.clear()
+
+
+def test_callback_flow(monkeypatch):
+    def fake_post(url, data=None, auth=None, headers=None):
+        class Resp:
+            def raise_for_status(self_inner):
+                pass
+
+            def json(self_inner):
+                return {"id_token": "jwt1"}
+
+        return Resp()
+
+    def fake_get(url):
+        class Resp:
+            def json(self_inner):
+                return {"keys": []}
+
+        return Resp()
+
+    monkeypatch.setattr("app.auth.cognito.requests.post", fake_post)
+    monkeypatch.setattr("requests.get", fake_get)
+    monkeypatch.setattr(
+        "app.auth.dependencies.get_current_user", lambda token=None: {"sub": "u1"}
+    )
+
+    resp = client.get("/?code=abc", follow_redirects=False)
+    assert resp.status_code == 303
+    assert resp.headers["location"] == "/"
+    cookie = resp.cookies.get("access_token")
+    assert cookie == "jwt1"
+
+    resp2 = client.get("/", cookies={"access_token": cookie})
+    assert resp2.status_code == 200
+    assert "u1" in resp2.text
 
 
 def test_get_current_user_valid(monkeypatch):
