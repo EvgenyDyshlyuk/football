@@ -2,10 +2,16 @@
 
 ## Setup
 
-1. `poetry install`
-2. `npm install tailwindcss`
-3. `npm run build:css`
-4. `poetry run uvicorn app.main:app --reload`
-5. Adjust settings in `config.ini` if your Cognito details differ.
+1. Clone the repository:
+   ```bash
+   git clone
+run setup.sh
+(poetry will be run according to the setup.sh script)
+Adjust settings in `config.ini` if your Cognito details differ.
 
-Visit `http://localhost:8000/auth/login` to view the login form. Incorrect credentials should display an error in place without page reload; correct credentials redirect back to home.
+## Testing
+poetry run pytest
+poetry run ruff check .
+
+## Running the Application
+poetry run uvicorn app.main:app --reload
