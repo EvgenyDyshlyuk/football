@@ -127,7 +127,8 @@ def test_callback_flow(monkeypatch):
     cookie = resp.cookies.get("access_token")
     assert cookie == "jwt1"
 
-    resp2 = client.get("/", cookies={"access_token": cookie})
+    client.cookies.set("access_token", cookie)
+    resp2 = client.get("/")
     assert resp2.status_code == 200
     assert "u1" in resp2.text
 
