@@ -12,6 +12,7 @@ from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
+from app.core.config import STAGE
 
 # Determine this file’s parent dir (i.e. the "app/" folder)
 BASE_DIR = Path(__file__).parent
@@ -45,7 +46,7 @@ async def root(request: Request) -> Response:
             key="access_token",
             value=id_token,
             httponly=True,
-            secure=True,
+            secure=(STAGE != "local"),
         )
         return redirect
 
