@@ -13,7 +13,6 @@ os.environ.setdefault("COGNITO_CLIENT_ID", "dummy_client")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.main import app
-from app.auth import cognito
 from app.config import COGNITO_AUTH_URL
 
 client = TestClient(app)

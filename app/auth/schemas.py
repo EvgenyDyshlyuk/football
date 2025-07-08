@@ -1,3 +1,5 @@
+"""Pydantic models used by the authentication routes."""
+
 from pydantic import BaseModel
 
 

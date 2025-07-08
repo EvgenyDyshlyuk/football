@@ -1,4 +1,8 @@
+"""Utility functions for interacting with AWS Cognito."""
+
 import os
+from typing import Any, Dict, Optional
+
 import boto3
 from botocore.exceptions import ClientError
 
@@ -9,9 +13,11 @@ COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 client = boto3.client("cognito-idp", region_name=AWS_REGION)
 
 
-def authenticate_user(username: str, password: str):
-    """Attempt ADMIN_NO_SRP_AUTH against Cognito. Returns AuthenticationResult dict
-    or None on failure."""
+def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
+    """Attempt ADMIN_NO_SRP_AUTH against Cognito.
+
+    Returns the ``AuthenticationResult`` dictionary or ``None`` on failure.
+    """
     try:
         resp = client.initiate_auth(
             AuthFlow="ADMIN_NO_SRP_AUTH",
