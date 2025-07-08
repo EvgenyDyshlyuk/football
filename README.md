@@ -13,8 +13,9 @@ A fully server-rendered, Alpine/HTMX-enhanced UI served by S3/CloudFront for max
 Your FastAPI code running in a Lambda container, scaling to zero when idle.
 
 ## Setup
-run setup.sh (poetry will be run according to the setup.sh script)
-Copy `.env.template` to `.env` and adjust the values for your Cognito setup.
+Run `setup.sh` to install Poetry and Node dependencies.
+Copy `.env.template` to `.env` and replace the placeholder Cognito values with your own.
+At a minimum `COGNITO_CLIENT_ID` must be provided or the application will not start.
 
 ## Testing
 poetry run pytest
