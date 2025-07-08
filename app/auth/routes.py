@@ -1,16 +1,34 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Form, Depends, Response, status
 from fastapi.responses import RedirectResponse
 
-from app.config import COGNITO_AUTH_URL
+from app.jinja2_env import templates
+from app.auth.cognito import authenticate_user
 
-auth_router = APIRouter()
+auth_router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @auth_router.get("/login")
-async def login_get():
-    return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+async def get_login():
+    return templates.TemplateResponse("auth/login.html", {"request": {}})
 
 
 @auth_router.post("/login")
-async def login_post():
-    return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+async def post_login(
+    response: Response,
+    username: str = Form(...),
+    password: str = Form(...),
+):
+    auth = authenticate_user(username, password)
+    if not auth:
+        return Response(
+            content='<p class="text-red-500">Invalid credentials</p>',
+            media_type="text/html",
+        )
+    redirect = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
+    redirect.set_cookie(
+        key="access_token",
+        value=auth["IdToken"],
+        httponly=True,
+        secure=True,
+    )
+    return redirect

@@ -21,7 +21,7 @@ app.mount(
 )
 
 # Include your Cognito-based auth routes at /auth
-app.include_router(auth_router, prefix="/auth")
+app.include_router(auth_router)
 
 
 @app.get("/", include_in_schema=False)

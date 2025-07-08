@@ -45,6 +45,9 @@ if [ ! -f pyproject.toml ]; then
     -n
 fi
 
+# Ensure auth dependencies are present
+poetry add python-jose boto3
+
 # Install all Python deps
 poetry install
 
