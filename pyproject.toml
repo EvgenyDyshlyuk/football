@@ -16,6 +16,7 @@ uvicorn = { version = "0.35.0", extras = ["standard"] }
 jinja2 = "3.1.6"
 pydantic = "2.11.7"
 python-multipart = "0.0.20"
+python-jose = "^3.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "*"

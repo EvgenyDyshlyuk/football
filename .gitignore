@@ -228,9 +228,3 @@ yarn-error.log*
 dist/
 build/
 
-# lock files (if you’re using a different manager)
-# yarn.lock     # keep this if you use Yarn
-package-lock.json  # keep this if you use npm
-
-# === Python (your boilerplate) ===
-# (existing Python ignores, e.g. __pycache__/, *.py[cod], .venv/, etc.)
