@@ -7,7 +7,9 @@ COGNITO_AUTH_URL_BASE = os.getenv(
     "COGNITO_AUTH_URL_BASE",
     "https://example.auth.eu-west-2.amazoncognito.com/login",
 )
-COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID", "dummy_client")
+COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
+if not COGNITO_CLIENT_ID:
+    raise RuntimeError("Missing COGNITO_CLIENT_ID environment variable")
 COGNITO_SCOPE = os.getenv("COGNITO_SCOPE", "email+openid+phone")
 COGNITO_REDIRECT_URI = os.getenv("COGNITO_REDIRECT_URI", "http://localhost:8000/")
 
