@@ -14,7 +14,7 @@ Your FastAPI code running in a Lambda container, scaling to zero when idle.
 
 ## Setup
 run setup.sh (poetry will be run according to the setup.sh script)
-Adjust settings in `config.ini` if your Cognito details differ.
+Copy `.env.template` to `.env` and adjust the values for your Cognito setup.
 
 ## Testing
 poetry run pytest
