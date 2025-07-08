@@ -1,6 +1,5 @@
 """Authentication dependencies used across the application."""
 
-import os
 from typing import Any, Dict
 
 import requests
@@ -8,9 +7,13 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
 
-from app.core.config import COGNITO_REGION, COGNITO_USER_POOL_ID
+from app.core.config import (
+    COGNITO_REGION,
+    COGNITO_USER_POOL_ID,
+    COGNITO_APP_CLIENT_ID,
+)
 
-CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
+CLIENT_ID = COGNITO_APP_CLIENT_ID
 
 jwks_url = (
     f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/"
