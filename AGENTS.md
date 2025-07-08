@@ -8,7 +8,7 @@ This repository uses **Poetry** for Python dependencies and **npm** for front-en
 - `app/templates/` - Jinja2 templates
 - `app/static/` - Static assets (CSS/JS) built via Tailwind
 - `tests/` - Pytest test suite
-- `config.ini` - Cognito configuration values
+- `.env.template` - Example environment configuration values
 
 ## Recommended Workflow
 1. **Install dependencies**
