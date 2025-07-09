@@ -7,6 +7,7 @@ import requests
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
+from jose.exceptions import ExpiredSignatureError, JWTError
 
 from app.core.config import (
     COGNITO_REGION,
@@ -41,6 +42,20 @@ def get_current_user(
     try:
         header = jwt.get_unverified_header(credentials)
         key = next(k for k in jwks["keys"] if k["kid"] == header["kid"])
+    except StopIteration:
+        logger.error("JWT kid %s not found in JWKS", header.get("kid"))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Signing key not found",
+        )
+    except Exception as exc:
+        logger.error("Failed to parse token header: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
+
+    try:
         public_key = jwk.construct(key)
         payload = jwt.decode(
             credentials,
@@ -49,7 +64,20 @@ def get_current_user(
             audience=CLIENT_ID,
         )
         return payload
+    except ExpiredSignatureError as exc:
+        logger.error("Token expired: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token expired",
+        )
+    except JWTError as exc:
+        logger.error("JWT error: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+        )
     except Exception:
+        logger.exception("Unexpected error during JWT validation")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
