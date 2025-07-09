@@ -40,16 +40,26 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def fetch_user_attributes(sub: str) -> Dict[str, Any]:
-    """Retrieve a user's attributes from Cognito using their subject/username."""
+def fetch_user_attributes(username: str) -> Dict[str, Any]:
+    """Retrieve a user's attributes from Cognito using their username.
+
+    The ``admin_get_user`` call expects the username stored in Cognito rather
+    than the ``sub`` claim found in JWT payloads. Using ``sub`` here will result
+    in a ``UserNotFoundException``. The caller should therefore pass the
+    ``username`` claim from the token.
+    """
+
     try:
-        resp = client.admin_get_user(UserPoolId=COGNITO_USER_POOL_ID, Username=sub)
+        resp = client.admin_get_user(
+            UserPoolId=COGNITO_USER_POOL_ID,
+            Username=username,
+        )
     except ClientError:
-        logger.exception("Failed to fetch attributes for %s", sub)
+        logger.exception("Failed to fetch attributes for %s", username)
         return {}
 
     attrs = {attr["Name"]: attr["Value"] for attr in resp.get("UserAttributes", [])}
-    logger.debug("Fetched attributes for %s: %r", sub, attrs)
+    logger.debug("Fetched attributes for %s: %r", username, attrs)
     return attrs
 
 
