@@ -9,6 +9,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
+from app.auth.cognito import fetch_user_attributes
+
 from app.core.config import (
     COGNITO_REGION,
     COGNITO_USER_POOL_ID,
@@ -63,6 +65,8 @@ def get_current_user(
             algorithms=[key["alg"]],
             audience=CLIENT_ID,
         )
+        attrs = fetch_user_attributes(payload.get("sub"))
+        payload["attributes"] = attrs
         return payload
     except ExpiredSignatureError as exc:
         logger.error("Token expired: %s", exc)
