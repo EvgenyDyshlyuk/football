@@ -14,11 +14,22 @@ def configure_logging() -> None:
     ``INFO``.
     """
 
-    level_name = os.getenv("LOG_LEVEL", "INFO").upper()
-    if level_name not in {"INFO", "DEBUG"}:
-        level_name = "INFO"
+    level_name = os.getenv("LOG_LEVEL")
+    if level_name:
+        level = getattr(logging, level_name.upper(), logging.INFO)
+    else:
+        level = logging.INFO
+        for name in ("gunicorn.error", "uvicorn.error"):
+            logger = logging.getLogger(name)
+            if logger.level:
+                level = logger.level
+                break
 
-    logging.basicConfig(
-        level=getattr(logging, level_name, logging.INFO),
-        format="[%(asctime)s] %(levelname)s %(name)s: %(message)s",
-    )
+    root_logger = logging.getLogger()
+    if root_logger.handlers:
+        root_logger.setLevel(level)
+    else:
+        logging.basicConfig(
+            level=level,
+            format="[%(asctime)s] %(levelname)s %(name)s: %(message)s",
+        )
