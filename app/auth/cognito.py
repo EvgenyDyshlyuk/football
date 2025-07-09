@@ -40,6 +40,19 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def fetch_user_attributes(sub: str) -> Dict[str, Any]:
+    """Retrieve a user's attributes from Cognito using their subject/username."""
+    try:
+        resp = client.admin_get_user(UserPoolId=COGNITO_USER_POOL_ID, Username=sub)
+    except ClientError:
+        logger.exception("Failed to fetch attributes for %s", sub)
+        return {}
+
+    attrs = {attr["Name"]: attr["Value"] for attr in resp.get("UserAttributes", [])}
+    logger.debug("Fetched attributes for %s: %r", sub, attrs)
+    return attrs
+
+
 def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
     """Exchange an OAuth `code` for tokens via Cognito, with robust debug/error output."""
     token_url = COGNITO_AUTH_URL_BASE.replace("/login", "/oauth2/token")

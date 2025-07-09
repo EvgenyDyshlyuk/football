@@ -21,28 +21,12 @@ from app.config import COGNITO_AUTH_URL
 client = TestClient(app)
 
 
-def test_login_get():
-    response = client.get("/auth/login")
-    assert response.status_code == 200
-    assert "Username" in response.text
+def test_login_redirect():
+    resp = client.get("/auth/login", follow_redirects=False)
+    assert resp.status_code == 307
+    assert resp.headers["location"] == COGNITO_AUTH_URL
 
 
-def test_login_post_invalid(monkeypatch):
-    monkeypatch.setattr("app.auth.routes.authenticate_user", lambda u, p: None)
-    response = client.post("/auth/login", data={"username": "bad", "password": "pass"})
-    assert response.status_code == 200
-    assert "Invalid credentials" in response.text
-
-
-def test_login_post_success(monkeypatch):
-    monkeypatch.setattr("app.auth.routes.authenticate_user", lambda u, p: {"AccessToken": "abc"})
-    response = client.post("/auth/login", data={"username": "good", "password": "pass"}, follow_redirects=False)
-    assert response.status_code == 303
-    assert response.headers.get("location") == "/"
-    assert response.cookies.get("access_token") == "abc"
-    # Cookie should not include the Secure flag in local stage
-    set_cookie_header = response.headers.get("set-cookie", "")
-    assert "Secure" not in set_cookie_header
 
 
 def test_homepage_get(monkeypatch):
@@ -54,11 +38,15 @@ def test_homepage_get(monkeypatch):
         return Resp()
 
     monkeypatch.setattr("requests.get", fake_get)
-    monkeypatch.setattr("app.auth.dependencies.get_current_user", lambda token=None: {"sub": "u1"})
+    monkeypatch.setattr(
+        "app.auth.dependencies.get_current_user",
+        lambda token=None: {"sub": "u1", "attributes": {"nickname": "nick"}},
+    )
     response = client.get("/", headers={"Authorization": "Bearer token"})
     assert response.status_code == 200
     assert "Hello:" in response.text
     assert "u1" in response.text
+    assert "nickname" in response.text
 
 
 def test_homepage_redirect_for_new_user():
@@ -77,23 +65,14 @@ def test_homepage_cookie_login(monkeypatch):
 
     monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
-        "app.auth.routes.authenticate_user", lambda u, p: {"AccessToken": "abc"}
-    )
-    monkeypatch.setattr(
-        "app.auth.dependencies.get_current_user", lambda token=None: {"sub": "u1"}
+        "app.auth.dependencies.get_current_user",
+        lambda token=None: {"sub": "u1", "attributes": {"nickname": "nick"}},
     )
 
-    login_resp = client.post(
-        "/auth/login", data={"username": "good", "password": "pass"}, follow_redirects=False
-    )
-    assert login_resp.status_code == 303
-    cookie = login_resp.cookies.get("access_token")
-    assert cookie == "abc"
-
-    client.cookies.set("access_token", cookie)
+    client.cookies.set("access_token", "abc")
     response = client.get("/")
     assert response.status_code == 200
-    assert "u1" in response.text
+    assert "nickname" in response.text
     client.cookies.clear()
 
 
@@ -122,7 +101,8 @@ def test_callback_flow(monkeypatch):
     monkeypatch.setattr("app.auth.cognito.requests.post", fake_post)
     monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
-        "app.auth.dependencies.get_current_user", lambda token=None: {"sub": "u1"}
+        "app.auth.dependencies.get_current_user",
+        lambda token=None: {"sub": "u1", "attributes": {"nickname": "nick"}},
     )
 
     resp = client.get("/?code=abc", follow_redirects=False)
@@ -161,6 +141,7 @@ def test_get_current_user_valid(monkeypatch):
         return Resp()
 
     monkeypatch.setattr("requests.get", fake_get)
+    monkeypatch.setattr("app.auth.cognito.fetch_user_attributes", lambda sub: {})
     sys.modules.pop("app.auth.dependencies", None)
     dependencies = importlib.import_module("app.auth.dependencies")
 
@@ -191,6 +172,7 @@ def test_get_current_user_invalid(monkeypatch):
         return Resp()
 
     monkeypatch.setattr("requests.get", fake_get)
+    monkeypatch.setattr("app.auth.cognito.fetch_user_attributes", lambda sub: {})
     sys.modules.pop("app.auth.dependencies", None)
     dependencies = importlib.import_module("app.auth.dependencies")
 
