@@ -35,7 +35,7 @@ def test_login_post_invalid(monkeypatch):
 
 
 def test_login_post_success(monkeypatch):
-    monkeypatch.setattr("app.auth.routes.authenticate_user", lambda u, p: {"IdToken": "abc"})
+    monkeypatch.setattr("app.auth.routes.authenticate_user", lambda u, p: {"AccessToken": "abc"})
     response = client.post("/auth/login", data={"username": "good", "password": "pass"}, follow_redirects=False)
     assert response.status_code == 303
     assert response.headers.get("location") == "/"
@@ -77,7 +77,7 @@ def test_homepage_cookie_login(monkeypatch):
 
     monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
-        "app.auth.routes.authenticate_user", lambda u, p: {"IdToken": "abc"}
+        "app.auth.routes.authenticate_user", lambda u, p: {"AccessToken": "abc"}
     )
     monkeypatch.setattr(
         "app.auth.dependencies.get_current_user", lambda token=None: {"sub": "u1"}

@@ -38,7 +38,7 @@ async def post_login(
     redirect = RedirectResponse(url="/", status_code=status.HTTP_303_SEE_OTHER)
     redirect.set_cookie(
         key="access_token",
-        value=auth["IdToken"],
+        value=auth.get("AccessToken") or auth.get("IdToken"),
         httponly=True,
         secure=(request.url.scheme == "https"),
     )
