@@ -2,6 +2,7 @@
 
 from typing import Any, Dict
 
+import logging
 import requests
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -19,7 +20,10 @@ jwks_url = (
     f"https://cognito-idp.{COGNITO_REGION}.amazonaws.com/"
     f"{COGNITO_USER_POOL_ID}/.well-known/jwks.json"
 )
-print("JWKS URL →", jwks_url)
+
+logger = logging.getLogger(__name__)
+logger.debug("JWKS URL → %s", jwks_url)
+
 jwks = requests.get(jwks_url).json()
 
 security = HTTPBearer()

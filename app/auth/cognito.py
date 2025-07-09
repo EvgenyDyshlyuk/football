@@ -6,6 +6,7 @@ import logging
 
 import requests
 from requests.auth import HTTPBasicAuth
+from requests.exceptions import HTTPError, RequestException
 
 from app.config import COGNITO_AUTH_URL_BASE, COGNITO_REDIRECT_URI
 from app.core.config import COGNITO_APP_CLIENT_ID, COGNITO_APP_CLIENT_SECRET
@@ -20,13 +21,6 @@ COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 client = boto3.client("cognito-idp", region_name=AWS_REGION)
 
 logger = logging.getLogger(__name__)
-if not logger.handlers:
-    handler = logging.StreamHandler()
-    handler.setFormatter(
-        logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s")
-    )
-    logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
 
 
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
@@ -100,7 +94,6 @@ def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
         logger.error("RequestException during token exchange: %s", req_err, exc_info=True)
         raise
 
-    except Exception as err:
+    except Exception:
         # Catch any other unexpected errors
-        logger.error("Unexpected error in exchange_code_for_tokens", exc_info=True)
-        raise
+        logger.error("Unexpected error in exchange_code_for_tokens", exc_info=True)        raise

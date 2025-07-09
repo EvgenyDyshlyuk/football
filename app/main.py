@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from app.logger import configure_logging
 from fastapi import FastAPI, Request, status
 from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -12,6 +13,8 @@ from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
+
+configure_logging()
 
 # Determine this file’s parent dir (i.e. the "app/" folder)
 BASE_DIR = Path(__file__).parent
