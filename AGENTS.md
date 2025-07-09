@@ -36,7 +36,7 @@ This repository uses **Poetry** for Python dependencies and **npm** for front-en
 
 4. **Run the development server** with:
    ```bash
-   poetry run uvicorn app.main:app --reload
+   poetry run uvicorn app.main:app --reload --log-level debug
    ```
 
 Keep commits focused and run the commands above to ensure code quality.
