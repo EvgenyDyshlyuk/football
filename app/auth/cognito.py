@@ -95,5 +95,8 @@ def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
         raise
 
     except Exception:
-        # Catch any other unexpected errors
-        logger.error("Unexpected error in exchange_code_for_tokens", exc_info=True)        raise
+        # Catch any other unexpected errors        logger.error(
+            "Unexpected error in exchange_code_for_tokens",
+            exc_info=True,
+        )
+        raise
