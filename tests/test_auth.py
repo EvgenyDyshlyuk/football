@@ -98,8 +98,12 @@ def test_homepage_cookie_login(monkeypatch):
 
 
 def test_callback_flow(monkeypatch):
-    def fake_post(url, data=None, auth=None, headers=None):
+    def fake_post(url, data=None, auth=None, headers=None, **kwargs):
         class Resp:
+            status_code = 200
+            headers = {}
+            text = "{}"
+
             def raise_for_status(self_inner):
                 pass
 
