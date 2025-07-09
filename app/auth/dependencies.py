@@ -65,7 +65,10 @@ def get_current_user(
             algorithms=[key["alg"]],
             audience=CLIENT_ID,
         )
-        attrs = fetch_user_attributes(payload.get("sub"))
+        # The Cognito AdminGetUser API expects the user's username, not the
+        # ``sub`` claim. Tokens include a ``username`` field we can use for this
+        # call to correctly retrieve profile attributes.
+        attrs = fetch_user_attributes(payload.get("username"))
         payload["attributes"] = attrs
         return payload
     except ExpiredSignatureError as exc:

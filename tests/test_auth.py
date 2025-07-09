@@ -40,11 +40,15 @@ def test_homepage_get(monkeypatch):
     monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
         "app.auth.dependencies.get_current_user",
-        lambda token=None: {"sub": "u1", "attributes": {"nickname": "nick"}},
+        lambda token=None: {
+            "sub": "u1",
+            "username": "u1",
+            "attributes": {"nickname": "nick"},
+        },
     )
     response = client.get("/", headers={"Authorization": "Bearer token"})
     assert response.status_code == 200
-    assert "Hello:" in response.text
+    assert "Hello" in response.text
     assert "u1" in response.text
     assert "nickname" in response.text
 
@@ -66,7 +70,11 @@ def test_homepage_cookie_login(monkeypatch):
     monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
         "app.auth.dependencies.get_current_user",
-        lambda token=None: {"sub": "u1", "attributes": {"nickname": "nick"}},
+        lambda token=None: {
+            "sub": "u1",
+            "username": "u1",
+            "attributes": {"nickname": "nick"},
+        },
     )
 
     client.cookies.set("access_token", "abc")
@@ -102,7 +110,11 @@ def test_callback_flow(monkeypatch):
     monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
         "app.auth.dependencies.get_current_user",
-        lambda token=None: {"sub": "u1", "attributes": {"nickname": "nick"}},
+        lambda token=None: {
+            "sub": "u1",
+            "username": "u1",
+            "attributes": {"nickname": "nick"},
+        },
     )
 
     resp = client.get("/?code=abc", follow_redirects=False)
