@@ -53,11 +53,11 @@ async def root(request: Request) -> Response:
 
     if code:
         tokens = exchange_code_for_tokens(code)
-        id_token = tokens.get("id_token") or tokens.get("access_token")
+        access_token = tokens.get("access_token") or tokens.get("id_token")
         redirect = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
         redirect.set_cookie(
             key="access_token",
-            value=id_token,
+            value=access_token,
             httponly=True,
             secure=(request.url.scheme == "https"),
         )
