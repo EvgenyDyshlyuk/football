@@ -22,4 +22,4 @@ poetry run pytest
 poetry run ruff check .
 
 ## Running the Application
-poetry run uvicorn app.main:app --reload
+poetry run uvicorn app.main:app --reload --log-level debug
