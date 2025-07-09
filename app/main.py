@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+import logging
 from app.logger import configure_logging
 from fastapi import FastAPI, Request, status
 from fastapi.responses import RedirectResponse, Response
@@ -15,6 +16,8 @@ from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
 
 configure_logging()
+
+logger = logging.getLogger(__name__)
 
 # Determine this file’s parent dir (i.e. the "app/" folder)
 BASE_DIR = Path(__file__).parent
@@ -40,6 +43,14 @@ async def root(request: Request) -> Response:
     cookie_token = request.cookies.get("access_token")
     code = request.query_params.get("code")
 
+    logger.debug("Incoming cookies: %r", dict(request.cookies))
+    logger.debug("Authorization header: %s", auth_header)
+    logger.debug(
+        "Cookie token preview: %s",
+        f"{cookie_token[:10]}..." if cookie_token else None,
+    )
+    logger.debug("Query code: %s", code)
+
     if code:
         tokens = exchange_code_for_tokens(code)
         id_token = tokens.get("id_token") or tokens.get("access_token")
@@ -49,6 +60,9 @@ async def root(request: Request) -> Response:
             value=id_token,
             httponly=True,
             secure=(request.url.scheme == "https"),
+        )
+        logger.debug(
+            "Setting access_token cookie, secure=%s", request.url.scheme == "https"
         )
         return redirect
 
@@ -72,6 +86,7 @@ async def root(request: Request) -> Response:
                     COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT
                 )
 
+        logger.debug("User payload from token: %r", user)
         return templates.TemplateResponse(request, "home.html", {"user": user})
 
     return RedirectResponse(
