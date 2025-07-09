@@ -2,6 +2,7 @@
 
 import os
 from typing import Any, Dict, Optional
+import logging
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -17,6 +18,15 @@ COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
 COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 
 client = boto3.client("cognito-idp", region_name=AWS_REGION)
+
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(
+        logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s")
+    )
+    logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
 
 
 def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
@@ -37,19 +47,60 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
 
 
 def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
-    """Exchange an OAuth ``code`` for tokens via Cognito."""
-
+    """Exchange an OAuth `code` for tokens via Cognito, with robust debug/error output."""
     token_url = COGNITO_AUTH_URL_BASE.replace("/login", "/oauth2/token")
-    resp = requests.post(
-        token_url,
-        data={
-            "grant_type": "authorization_code",
-            "client_id": COGNITO_APP_CLIENT_ID,
-            "code": code,
-            "redirect_uri": COGNITO_REDIRECT_URI,
-        },
-        auth=HTTPBasicAuth(COGNITO_APP_CLIENT_ID, COGNITO_APP_CLIENT_SECRET),
-        headers={"Content-Type": "application/x-www-form-urlencoded"},
-    )
-    resp.raise_for_status()
-    return resp.json()
+    payload = {
+        "grant_type": "authorization_code",
+        "client_id": COGNITO_APP_CLIENT_ID,
+        "code": code,
+        "redirect_uri": COGNITO_REDIRECT_URI,
+    }
+
+    logger.debug("Token request URL: %s", token_url)
+    logger.debug("Token request payload: %r", payload)
+
+    resp = None
+    try:
+        resp = requests.post(
+            token_url,
+            data=payload,
+            auth=HTTPBasicAuth(COGNITO_APP_CLIENT_ID, COGNITO_APP_CLIENT_SECRET),
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=10,
+        )
+        logger.debug("HTTP %s received", resp.status_code)
+        logger.debug("Response headers: %r", resp.headers)
+        logger.debug("Raw response body: %s", resp.text)
+
+        # This may raise HTTPError for 4xx/5xx
+        resp.raise_for_status()
+
+        tokens = resp.json()
+        logger.info("Token exchange succeeded, keys: %s", list(tokens.keys()))
+        return tokens
+
+    except HTTPError as http_err:
+        # Prefer the response attached to the exception, fallback to resp
+        response = getattr(http_err, "response", None) or resp
+        status = getattr(response, "status_code", "N/A")
+        try:
+            body = response.json()
+        except Exception:
+            body = response.text if response is not None else "<no response body>"
+        logger.error(
+            "HTTPError during token exchange (status=%s): %s\nResponse body: %r",
+            status,
+            http_err,
+            body,
+        )
+        raise
+
+    except RequestException as req_err:
+        # Network issues, DNS problems, timeouts, etc.
+        logger.error("RequestException during token exchange: %s", req_err, exc_info=True)
+        raise
+
+    except Exception as err:
+        # Catch any other unexpected errors
+        logger.error("Unexpected error in exchange_code_for_tokens", exc_info=True)
+        raise
