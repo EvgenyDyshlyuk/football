@@ -4,12 +4,12 @@ import logging
 from typing import Any, Dict
 
 import requests
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
-from app.auth.cognito import fetch_user_attributes
+from app.auth.cognito import fetch_user_attributes, refresh_access_token
 from app.config import (
     COGNITO_APP_CLIENT_ID,
     COGNITO_REGION,
@@ -34,6 +34,7 @@ security = HTTPBearer()
 
 
 def get_current_user(
+    request: Request,
     token: HTTPAuthorizationCredentials = Depends(security),
 ) -> Dict[str, Any]:
     """Validate the Cognito JWT from the Authorization header or cookie.
@@ -81,6 +82,19 @@ def get_current_user(
         )
     except ExpiredSignatureError as exc:
         logger.error("Token expired: %s", exc)
+        refresh_token = request.cookies.get("refresh_token")
+        if refresh_token:
+            try:
+                tokens = refresh_access_token(refresh_token)
+                new_access = tokens.get("access_token")
+                if new_access:
+                    request.state.new_access_token = new_access
+                    new_creds = HTTPAuthorizationCredentials(
+                        scheme="Bearer", credentials=new_access
+                    )
+                    return get_current_user(request, token=new_creds)
+            except Exception:
+                logger.exception("Failed automatic refresh")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token expired",

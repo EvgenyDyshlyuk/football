@@ -170,6 +170,78 @@ def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
         )
         raise
 
+
+# ─── REFRESH ACCESS TOKEN ─────────────────────────────────────────────────────
+
+def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
+    """Use a Cognito refresh token to obtain new tokens."""
+
+    _missing = [
+        name
+        for name, val in [
+            ("COGNITO_AUTH_URL_BASE", COGNITO_AUTH_URL_BASE),
+            ("COGNITO_APP_CLIENT_ID", COGNITO_APP_CLIENT_ID),
+            ("COGNITO_APP_CLIENT_SECRET", COGNITO_APP_CLIENT_SECRET),
+        ]
+        if not val
+    ]
+    if _missing:
+        raise RuntimeError(f"Missing environment variables: {', '.join(_missing)}")
+
+    base_url: str = COGNITO_AUTH_URL_BASE  # type: ignore[assignment]
+    client_id_app: str = COGNITO_APP_CLIENT_ID  # type: ignore[assignment]
+    client_secret: str = COGNITO_APP_CLIENT_SECRET  # type: ignore[assignment]
+
+    token_url = base_url.replace("/login", "/oauth2/token")
+    payload = {
+        "grant_type": "refresh_token",
+        "client_id": client_id_app,
+        "refresh_token": refresh_token,
+    }
+
+    logger.debug("Refresh token request payload: %r", payload)
+
+    resp: requests.Response | None = None
+    try:
+        resp = requests.post(
+            token_url,
+            data=payload,
+            auth=HTTPBasicAuth(client_id_app, client_secret),
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            timeout=10,
+        )
+
+        resp.raise_for_status()
+        tokens = resp.json()
+        logger.info("Refresh token succeeded, keys: %s", list(tokens.keys()))
+        return tokens
+    except HTTPError as http_err:
+        response = http_err.response or resp
+        status_code = response.status_code if response else "N/A"
+        body: Any
+        if response is not None:
+            try:
+                body = response.json()
+            except Exception:
+                body = response.text
+        else:
+            body = "<no response>"
+        logger.error(
+            "HTTPError during token refresh (status=%s): %s\nResponse body: %r",
+            status_code,
+            http_err,
+            body,
+        )
+        raise
+    except RequestException as req_err:
+        logger.error(
+            "RequestException during token refresh: %s", req_err, exc_info=True
+        )
+        raise
+    except Exception:
+        logger.error("Unexpected error in refresh_access_token", exc_info=True)
+        raise
+
     except Exception:
         logger.error("Unexpected error in exchange_code_for_tokens", exc_info=True)
         raise

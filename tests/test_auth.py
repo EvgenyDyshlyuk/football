@@ -166,8 +166,11 @@ def test_get_current_user_valid(monkeypatch):
         algorithm="HS256",
         headers={"kid": "test"},
     )
+    from starlette.requests import Request
+
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-    payload = dependencies.get_current_user(token=creds)
+    request = Request(scope={"type": "http", "headers": []})
+    payload = dependencies.get_current_user(request=request, token=creds)
     assert payload["sub"] == "u1"
 
 
@@ -198,6 +201,9 @@ def test_get_current_user_invalid(monkeypatch):
 
     token = jwt.encode({"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]},
                        "wrong", algorithm="HS256", headers={"kid": "test"})
+    from starlette.requests import Request
+
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
+    request = Request(scope={"type": "http", "headers": []})
     with pytest.raises(Exception):
-        dependencies.get_current_user(token=creds)
+        dependencies.get_current_user(request=request, token=creds)
