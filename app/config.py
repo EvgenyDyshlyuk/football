@@ -1,39 +1,48 @@
-"""Configuration loader for AWS Cognito settings."""
-# %%
+"""Central configuration and environment loading for the app."""
+
+from __future__ import annotations
+
 import os
+from pathlib import Path
 from urllib.parse import quote_plus
 
-# 1) Load and validate all required Cognito environment variables
+from dotenv import load_dotenv
+
+# Automatically load a local .env file when running in development.
+if os.getenv("STAGE", "local") == "local":
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+
+# Basic AWS/Cognito settings
+COGNITO_REGION = os.getenv("COGNITO_REGION") or os.getenv("AWS_REGION")
+COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
+COGNITO_APP_CLIENT_ID = os.getenv("COGNITO_APP_CLIENT_ID")
+COGNITO_APP_CLIENT_SECRET = os.getenv("COGNITO_APP_CLIENT_SECRET")
+
+# OAuth related values
 COGNITO_AUTH_URL_BASE = os.getenv("COGNITO_AUTH_URL_BASE")
-if not COGNITO_AUTH_URL_BASE:
-    raise RuntimeError("Missing COGNITO_AUTH_URL_BASE environment variable")
-
 COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
-if not COGNITO_CLIENT_ID:
-    raise RuntimeError("Missing COGNITO_CLIENT_ID environment variable")
-
 COGNITO_SCOPE = os.getenv("COGNITO_SCOPE")
-if not COGNITO_SCOPE:
-    raise RuntimeError("Missing COGNITO_SCOPE environment variable")
-
 COGNITO_REDIRECT_URI = os.getenv("COGNITO_REDIRECT_URI")
-if not COGNITO_REDIRECT_URI:
-    raise RuntimeError("Missing COGNITO_REDIRECT_URI environment variable")
 
-# 2) Encode the redirect URI (this forces the str-overload of quote_plus)
-encoded_redirect = quote_plus(COGNITO_REDIRECT_URI, safe="/")
+_missing = [
+    name
+    for name, val in [
+        ("COGNITO_REGION", COGNITO_REGION),
+        ("COGNITO_USER_POOL_ID", COGNITO_USER_POOL_ID),
+        ("COGNITO_APP_CLIENT_ID", COGNITO_APP_CLIENT_ID),
+        ("COGNITO_AUTH_URL_BASE", COGNITO_AUTH_URL_BASE),
+        ("COGNITO_CLIENT_ID", COGNITO_CLIENT_ID),
+        ("COGNITO_SCOPE", COGNITO_SCOPE),
+        ("COGNITO_REDIRECT_URI", COGNITO_REDIRECT_URI),
+    ]
+    if not val
+]
+if _missing:
+    raise RuntimeError(f"Missing environment variables: {', '.join(_missing)}")
 
-# 3) Build the full Cognito authorization URL
+# Construct the login URL for the Cognito Hosted UI
+_encoded_redirect = quote_plus(COGNITO_REDIRECT_URI, safe="/")
 COGNITO_AUTH_URL = (
-    f"{COGNITO_AUTH_URL_BASE}"
-    f"?client_id={COGNITO_CLIENT_ID}"
-    f"&response_type=code"
-    f"&scope={COGNITO_SCOPE}"
-    f"&redirect_uri={encoded_redirect}"
+    f"{COGNITO_AUTH_URL_BASE}?client_id={COGNITO_CLIENT_ID}&response_type=code"
+    f"&scope={COGNITO_SCOPE}&redirect_uri={_encoded_redirect}"
 )
-
-# Example usage printout (remove in production)
-if __name__ == "__main__":
-    print("Cognito Auth URL:", COGNITO_AUTH_URL)
-
-# %%
