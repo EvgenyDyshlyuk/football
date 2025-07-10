@@ -29,7 +29,4 @@ def configure_logging() -> None:
     if root_logger.handlers:
         root_logger.setLevel(level)
     else:
-        logging.basicConfig(
-            level=level,
-            format="[%(asctime)s] %(levelname)s %(name)s: %(message)s",
-        )
+        logging.basicConfig(level=level, format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")

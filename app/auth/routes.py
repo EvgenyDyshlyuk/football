@@ -16,5 +16,3 @@ async def get_login(request: Request) -> FastAPIResponse:
     """Redirect directly to Cognito's hosted UI."""
     logger.debug("Redirecting to Cognito login; existing cookies: %r", dict(request.cookies))
     return RedirectResponse(url=COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
-
-

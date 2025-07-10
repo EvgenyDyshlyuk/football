@@ -9,7 +9,7 @@ from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials
 
-import app.core.config  # noqa: F401  # Ensure .env is loaded on startup
+# import app.core.config  # noqa: F401  # Ensure .env is loaded on startup
 from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
@@ -45,15 +45,16 @@ async def root(request: Request) -> Response:
 
     logger.debug("Incoming cookies: %r", dict(request.cookies))
     logger.debug("Authorization header: %s", auth_header)
-    logger.debug(
-        "Cookie token preview: %s",
-        f"{cookie_token[:10]}..." if cookie_token else None,
-    )
+    logger.debug("Cookie token preview: %s", f"{cookie_token[:10]}..." if cookie_token else None)
     logger.debug("Query code: %s", code)
 
+    # If Cognito redirected back with a code, exchange and set cookie
     if code:
         tokens = exchange_code_for_tokens(code)
         access_token = tokens.get("access_token") or tokens.get("id_token")
+        if not access_token:  # guard to ensure access_token is a str, never None
+            raise RuntimeError("Cognito did not return an access or ID token")
+
         redirect = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
         redirect.set_cookie(
             key="access_token",
@@ -61,20 +62,17 @@ async def root(request: Request) -> Response:
             httponly=True,
             secure=(request.url.scheme == "https"),
         )
-        logger.debug(
-            "Setting access_token cookie, secure=%s", request.url.scheme == "https"
-        )
+        logger.debug("Setting access_token cookie, secure=%s", request.url.scheme == "https")
         return redirect
 
+    # If we have credentials in header or cookie, validate and show home
     if auth_header or cookie_token:
         from app.auth.dependencies import get_current_user
 
-        token = None
         scheme = "Bearer"
+        token = cookie_token or ""
         if auth_header:
             scheme, _, token = auth_header.partition(" ")
-        else:
-            token = cookie_token
 
         user = None
         if token:
@@ -82,13 +80,11 @@ async def root(request: Request) -> Response:
             try:
                 user = get_current_user(token=creds)
             except Exception:
-                return RedirectResponse(
-                    COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT
-                )
+                return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
         logger.debug("User payload from token: %r", user)
-        return templates.TemplateResponse(request, "home.html", {"user": user})
+        # Note: TemplateResponse expects (template_name, context)
+        return templates.TemplateResponse("home.html", {"request": request, "user": user})
 
-    return RedirectResponse(
-        COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT
-    )
+    # No code, no creds → start login
+    return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
