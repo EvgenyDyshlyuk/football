@@ -12,6 +12,9 @@ from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
+from app.auth.middleware import RefreshTokenMiddleware
+
+REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
 
 configure_logging()
 
@@ -21,6 +24,7 @@ logger = logging.getLogger(__name__)
 BASE_DIR = Path(__file__).parent
 
 app = FastAPI()
+app.add_middleware(RefreshTokenMiddleware)
 
 # Mount the static directory under /static, using the app/static folder
 app.mount(
@@ -50,17 +54,27 @@ async def root(request: Request) -> Response:
     if code:
         tokens = exchange_code_for_tokens(code)
         access_token = tokens.get("access_token") or tokens.get("id_token")
-        if not access_token:  # guard to ensure access_token is a str, never None
+        refresh_token = tokens.get("refresh_token")
+        if not access_token:
             raise RuntimeError("Cognito did not return an access or ID token")
 
         redirect = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+        secure_flag = request.url.scheme == "https"
         redirect.set_cookie(
             key="access_token",
             value=access_token,
             httponly=True,
-            secure=(request.url.scheme == "https"),
+            secure=secure_flag,
         )
-        logger.debug("Setting access_token cookie, secure=%s", request.url.scheme == "https")
+        if refresh_token:
+            redirect.set_cookie(
+                key="refresh_token",
+                value=refresh_token,
+                httponly=True,
+                secure=secure_flag,
+                max_age=REFRESH_TOKEN_MAX_AGE,
+            )
+        logger.debug("Setting access_token cookie, secure=%s", secure_flag)
         return redirect
 
     # If we have credentials in header or cookie, validate and show home
