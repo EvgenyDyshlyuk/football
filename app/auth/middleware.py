@@ -47,10 +47,5 @@ class RefreshTokenMiddleware(BaseHTTPMiddleware):
         new_access = getattr(request.state, "new_access_token", new_access)
         if new_access:
             secure = request.url.scheme == "https"
-            response.set_cookie(
-                "access_token",
-                new_access,
-                httponly=True,
-                secure=secure,
-            )
+            response.set_cookie("access_token", new_access, httponly=True, secure=secure)
         return response
