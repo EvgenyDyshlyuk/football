@@ -81,8 +81,8 @@ async def root(request: Request) -> Response:
                 return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
         logger.debug("User payload from token: %r", user)
-        # Note: TemplateResponse expects (template_name, context)
-        return templates.TemplateResponse("home.html", {"request": request, "user": user})
+        # TemplateResponse now expects the request first
+        return templates.TemplateResponse(request, "home.html", {"user": user})
 
     # No code, no creds → start login
     return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)

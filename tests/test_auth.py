@@ -13,6 +13,8 @@ os.environ.setdefault("COGNITO_CLIENT_ID", "dummy_client")
 os.environ.setdefault("COGNITO_APP_CLIENT_ID", "dummy_client")
 os.environ.setdefault("COGNITO_APP_CLIENT_SECRET", "dummy_secret")
 os.environ.setdefault("COGNITO_REDIRECT_URI", "http://testserver/")
+os.environ.setdefault("COGNITO_AUTH_URL_BASE", "https://example.com/login")
+os.environ.setdefault("COGNITO_SCOPE", "openid+profile")
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.main import app
@@ -155,7 +157,15 @@ def test_get_current_user_valid(monkeypatch):
     sys.modules.pop("app.auth.dependencies", None)
     dependencies = importlib.import_module("app.auth.dependencies")
     token = jwt.encode(
-        {"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]}, secret, algorithm="HS256", headers={"kid": "test"})
+        {
+            "sub": "u1",
+            "username": "u1",
+            "aud": os.environ["COGNITO_CLIENT_ID"],
+        },
+        secret,
+        algorithm="HS256",
+        headers={"kid": "test"},
+    )
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
     payload = dependencies.get_current_user(token=creds)
     assert payload["sub"] == "u1"
