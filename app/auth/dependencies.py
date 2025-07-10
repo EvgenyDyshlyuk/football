@@ -100,6 +100,13 @@ def get_current_user(
 
     # 3) Fetch Cognito user attributes if possible
     username = payload.get("username")
+    # Ensure username is present
+    if not username:
+        logger.error("Token payload missing 'username'")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload",
+        )
 
     try:
         attrs = fetch_user_attributes(username)

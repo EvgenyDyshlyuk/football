@@ -40,6 +40,10 @@ _missing = [
 if _missing:
     raise RuntimeError(f"Missing environment variables: {', '.join(_missing)}")
 
+# Separatly ensure the redirect URI is properly encoded for URL usage to make pylance happy
+if not COGNITO_REDIRECT_URI:
+    raise RuntimeError("COGNITO_REDIRECT_URI must be set in environment variables")
+
 # Construct the login URL for the Cognito Hosted UI
 _encoded_redirect = quote_plus(COGNITO_REDIRECT_URI, safe="/")
 COGNITO_AUTH_URL = (

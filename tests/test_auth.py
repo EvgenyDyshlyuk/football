@@ -27,12 +27,10 @@ def test_login_redirect():
     assert resp.headers["location"] == COGNITO_AUTH_URL
 
 
-
-
 def test_homepage_get(monkeypatch):
     def fake_get(url):
         class Resp:
-            def json(self_inner):
+            def json(self):
                 return {"keys": []}
 
         return Resp()
@@ -62,7 +60,7 @@ def test_homepage_redirect_for_new_user():
 def test_homepage_cookie_login(monkeypatch):
     def fake_get(url):
         class Resp:
-            def json(self_inner):
+            def json(self):
                 return {"keys": []}
 
         return Resp()
@@ -91,17 +89,17 @@ def test_callback_flow(monkeypatch):
             headers = {}
             text = "{}"
 
-            def raise_for_status(self_inner):
+            def raise_for_status(self):
                 pass
 
-            def json(self_inner):
+            def json(self):
                 return {"id_token": "jwt1"}
 
         return Resp()
 
     def fake_get(url):
         class Resp:
-            def json(self_inner):
+            def json(self):
                 return {"keys": []}
 
         return Resp()
@@ -147,7 +145,7 @@ def test_get_current_user_valid(monkeypatch):
 
     def fake_get(url):
         class Resp:
-            def json(self_inner):
+            def json(self):
                 return jwks
 
         return Resp()
@@ -156,8 +154,8 @@ def test_get_current_user_valid(monkeypatch):
     monkeypatch.setattr("app.auth.cognito.fetch_user_attributes", lambda sub: {})
     sys.modules.pop("app.auth.dependencies", None)
     dependencies = importlib.import_module("app.auth.dependencies")
-
-    token = jwt.encode({"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]}, secret, algorithm="HS256", headers={"kid": "test"})
+    token = jwt.encode(
+        {"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]}, secret, algorithm="HS256", headers={"kid": "test"})
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
     payload = dependencies.get_current_user(token=creds)
     assert payload["sub"] == "u1"
@@ -178,7 +176,7 @@ def test_get_current_user_invalid(monkeypatch):
 
     def fake_get(url):
         class Resp:
-            def json(self_inner):
+            def json(self):
                 return jwks
 
         return Resp()
