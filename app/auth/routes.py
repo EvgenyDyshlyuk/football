@@ -6,6 +6,9 @@ from fastapi.responses import RedirectResponse, Response as FastAPIResponse
 
 from app.config import COGNITO_AUTH_URL, COGNITO_AUTH_URL_BASE, COGNITO_CLIENT_ID, COGNITO_REDIRECT_URI
 
+if not COGNITO_AUTH_URL_BASE:  # to ensure str
+    raise ValueError("COGNITO_AUTH_URL_BASE must be set in the configuration")
+
 logger = logging.getLogger(__name__)
 
 auth_router = APIRouter(prefix="/auth", tags=["auth"])

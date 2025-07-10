@@ -241,7 +241,3 @@ def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
     except Exception:
         logger.error("Unexpected error in refresh_access_token", exc_info=True)
         raise
-
-    except Exception:
-        logger.error("Unexpected error in exchange_code_for_tokens", exc_info=True)
-        raise

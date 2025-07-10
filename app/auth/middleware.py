@@ -54,4 +54,3 @@ class RefreshTokenMiddleware(BaseHTTPMiddleware):
                 secure=secure,
             )
         return response
-

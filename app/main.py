@@ -90,7 +90,7 @@ async def root(request: Request) -> Response:
         if token:
             creds = HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
             try:
-                user = get_current_user(token=creds)
+                user = get_current_user(request=request, token=creds)
             except Exception:
                 return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
