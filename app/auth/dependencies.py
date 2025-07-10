@@ -10,7 +10,11 @@ from jose import jwk, jwt
 from jose.exceptions import ExpiredSignatureError, JWTError
 
 from app.auth.cognito import fetch_user_attributes
-from app.core.config import COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_APP_CLIENT_ID
+from app.config import (
+    COGNITO_APP_CLIENT_ID,
+    COGNITO_REGION,
+    COGNITO_USER_POOL_ID,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -94,20 +98,13 @@ def get_current_user(
             detail="Invalid or expired token",
         )
 
-    # 3) Fetch Cognito user attributes
+    # 3) Fetch Cognito user attributes if possible
     username = payload.get("username")
-    if not isinstance(username, str):
-        logger.error("JWT payload missing or invalid 'username' claim: %r", payload.get("username"))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
-        )
 
     try:
         attrs = fetch_user_attributes(username)
     except Exception as exc:
         logger.exception("Failed to fetch user attributes for %s: %s", username, exc)
-        # Depending on your policy, you might reject here or continue without attrs
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Unable to fetch user data",

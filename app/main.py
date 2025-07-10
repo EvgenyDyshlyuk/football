@@ -8,8 +8,6 @@ from fastapi import FastAPI, Request, status
 from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials
-
-# import app.core.config  # noqa: F401  # Ensure .env is loaded on startup
 from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates

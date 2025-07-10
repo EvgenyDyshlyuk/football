@@ -11,8 +11,12 @@ from requests.exceptions import HTTPError, RequestException
 import boto3
 from botocore.exceptions import ClientError
 
-from app.config import COGNITO_AUTH_URL_BASE, COGNITO_REDIRECT_URI
-from app.core.config import COGNITO_APP_CLIENT_ID, COGNITO_APP_CLIENT_SECRET
+from app.config import (
+    COGNITO_APP_CLIENT_ID,
+    COGNITO_APP_CLIENT_SECRET,
+    COGNITO_AUTH_URL_BASE,
+    COGNITO_REDIRECT_URI,
+)
 
 logger = logging.getLogger(__name__)
 
