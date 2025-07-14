@@ -91,8 +91,13 @@ async def root(request: Request) -> Response:
             creds = HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
             try:
                 user = get_current_user(request=request, token=creds)
+            except TypeError:
+                user = get_current_user(token=creds)
             except Exception:
-                return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+                return RedirectResponse(
+                    COGNITO_AUTH_URL,
+                    status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+                )
 
         logger.debug("User payload from token: %r", user)
         # TemplateResponse now expects the request first
