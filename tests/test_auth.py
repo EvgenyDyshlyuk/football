@@ -1,5 +1,6 @@
 import os
 import sys
+import requests
 from fastapi.testclient import TestClient
 from fastapi.security import HTTPAuthorizationCredentials
 from jose import jwt
@@ -16,9 +17,18 @@ os.environ.setdefault("COGNITO_REDIRECT_URI", "http://testserver/")
 os.environ.setdefault("COGNITO_AUTH_URL_BASE", "https://example.com/login")
 os.environ.setdefault("COGNITO_SCOPE", "openid+profile")
 
+def _fake_get(url):
+    class Resp:
+        def json(self):
+            return {"keys": []}
+
+    return Resp()
+
+requests.get = _fake_get
+
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from app.main import app
-from app.config import COGNITO_AUTH_URL
+from app.main import app  # noqa: E402
+from app.config import COGNITO_AUTH_URL  # noqa: E402
 
 client = TestClient(app)
 
