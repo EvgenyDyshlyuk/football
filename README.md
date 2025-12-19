@@ -15,7 +15,8 @@ Your FastAPI code running in a Lambda container, scaling to zero when idle.
 ## Setup
 Run `setup.sh` to install Poetry and Node dependencies.
 Copy `.env.template` to `.env` and replace the placeholder Cognito values with your own.
-At a minimum `COGNITO_CLIENT_ID`, `COGNITO_AUTH_URL_BASE`, `COGNITO_SCOPE`, and `COGNITO_REDIRECT_URI` must be provided or the application will not start.
+At a minimum `COGNITO_CLIENT_ID`, `COGNITO_AUTH_URL_BASE`, `COGNITO_SCOPE`, and `COGNITO_REDIRECT_URI`
+must be provided or the application will not start.
 
 ## Testing
 poetry run pytest

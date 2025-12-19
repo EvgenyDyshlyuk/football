@@ -1,6 +1,8 @@
 # Agent Guidelines for the Football Repository
 
-This repository uses **Poetry** for Python dependencies and **npm** for front-end assets. Before running tests or the application, ensure your environment is set up using `setup.sh` or that Poetry and Node are installed.
+This repository uses **Poetry** for Python dependencies and **npm** for front-end assets.
+Before running tests or the application, ensure your environment is set up using `setup.sh`
+or that Poetry and Node are installed.
 
 ## Directory Overview
 - `app/` - FastAPI application code
