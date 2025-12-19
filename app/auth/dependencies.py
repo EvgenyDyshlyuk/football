@@ -4,6 +4,8 @@ import logging
 from typing import Any, Dict
 
 import requests
+from functools import lru_cache
+from requests.exceptions import RequestException
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import jwk, jwt
@@ -27,8 +29,21 @@ jwks_url = (
 )
 logger.debug("JWKS URL → %s", jwks_url)
 
-# Fetch JWKS once at import time
-jwks = requests.get(jwks_url).json()
+
+@lru_cache
+def get_jwks() -> Dict[str, Any]:
+    """Fetch and cache the Cognito JWKS document."""
+    try:
+        resp = requests.get(jwks_url, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+    except (RequestException, ValueError) as exc:
+        logger.error("Failed to fetch JWKS: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Unable to load JWKS",
+        )
+
 
 security = HTTPBearer()
 
@@ -63,7 +78,7 @@ def get_current_user(
         )
 
     try:
-        key = next(k for k in jwks.get("keys", []) if k.get("kid") == kid)
+        key = next(k for k in get_jwks().get("keys", []) if k.get("kid") == kid)
     except StopIteration:
         logger.error("JWT kid %s not found in JWKS", kid)
         raise HTTPException(

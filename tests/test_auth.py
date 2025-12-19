@@ -1,6 +1,5 @@
 import os
 import sys
-import requests
 from fastapi.testclient import TestClient
 from fastapi.security import HTTPAuthorizationCredentials
 from jose import jwt
@@ -17,15 +16,6 @@ os.environ.setdefault("COGNITO_REDIRECT_URI", "http://testserver/")
 os.environ.setdefault("COGNITO_AUTH_URL_BASE", "https://example.com/login")
 os.environ.setdefault("COGNITO_SCOPE", "openid+profile")
 
-def _fake_get(url):
-    class Resp:
-        def json(self):
-            return {"keys": []}
-
-    return Resp()
-
-requests.get = _fake_get
-
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from app.main import app  # noqa: E402
 from app.config import COGNITO_AUTH_URL  # noqa: E402
@@ -40,14 +30,6 @@ def test_login_redirect():
 
 
 def test_homepage_get(monkeypatch):
-    def fake_get(url):
-        class Resp:
-            def json(self):
-                return {"keys": []}
-
-        return Resp()
-
-    monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
         "app.auth.dependencies.get_current_user",
         lambda token=None: {
@@ -70,14 +52,6 @@ def test_homepage_redirect_for_new_user():
 
 
 def test_homepage_cookie_login(monkeypatch):
-    def fake_get(url):
-        class Resp:
-            def json(self):
-                return {"keys": []}
-
-        return Resp()
-
-    monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
         "app.auth.dependencies.get_current_user",
         lambda token=None: {
@@ -109,15 +83,7 @@ def test_callback_flow(monkeypatch):
 
         return Resp()
 
-    def fake_get(url):
-        class Resp:
-            def json(self):
-                return {"keys": []}
-
-        return Resp()
-
     monkeypatch.setattr("app.auth.cognito.requests.post", fake_post)
-    monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr(
         "app.auth.dependencies.get_current_user",
         lambda token=None: {
@@ -155,17 +121,10 @@ def test_get_current_user_valid(monkeypatch):
         ]
     }
 
-    def fake_get(url):
-        class Resp:
-            def json(self):
-                return jwks
-
-        return Resp()
-
-    monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr("app.auth.cognito.fetch_user_attributes", lambda sub: {})
     sys.modules.pop("app.auth.dependencies", None)
     dependencies = importlib.import_module("app.auth.dependencies")
+    monkeypatch.setattr(dependencies, "get_jwks", lambda: jwks)
     token = jwt.encode(
         {
             "sub": "u1",
@@ -197,17 +156,10 @@ def test_get_current_user_invalid(monkeypatch):
         ]
     }
 
-    def fake_get(url):
-        class Resp:
-            def json(self):
-                return jwks
-
-        return Resp()
-
-    monkeypatch.setattr("requests.get", fake_get)
     monkeypatch.setattr("app.auth.cognito.fetch_user_attributes", lambda sub: {})
     sys.modules.pop("app.auth.dependencies", None)
     dependencies = importlib.import_module("app.auth.dependencies")
+    monkeypatch.setattr(dependencies, "get_jwks", lambda: jwks)
 
     token = jwt.encode({"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]},
                        "wrong", algorithm="HS256", headers={"kid": "test"})

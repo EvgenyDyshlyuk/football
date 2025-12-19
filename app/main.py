@@ -107,8 +107,6 @@ async def root(request: Request) -> Response:
 
     # If we have credentials in header or cookie, validate and show home
     if auth_header or cookie_token:
-        from app.auth.dependencies import get_current_user
-
         scheme = "Bearer"
         token = cookie_token or ""
         if auth_header:
