@@ -7,6 +7,26 @@
     <script src="/static/js/alpine.js"></script>
 </head>
 <body class="bg-gray-100 {% block body_class %}{% endblock %}">
-    {% block content %}{% endblock %}
+    <main class="pb-20">
+        {% block content %}{% endblock %}
+    </main>
+    <nav class="fixed inset-x-0 bottom-0 bg-white border-t border-gray-200">
+        <div class="max-w-md mx-auto flex justify-around py-3">
+            <a href="/" class="flex flex-col items-center text-gray-700">
+                <svg class="h-6 w-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M3 11l9-8 9 8"></path>
+                    <path d="M5 10v10h14V10"></path>
+                </svg>
+                <span class="text-xs">Home</span>
+            </a>
+            <a href="/settings" class="flex flex-col items-center text-gray-700">
+                <svg class="h-6 w-6 mb-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"></path>
+                </svg>
+                <span class="text-xs">Settings</span>
+            </a>
+        </div>
+    </nav>
 </body>
 </html>
