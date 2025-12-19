@@ -7,8 +7,8 @@
 <div class="flex justify-end p-2">
     <a href="/settings" class="text-blue-600 underline">Settings</a>
 </div>
-<h1>Hello {{user.sub}}!</h1>
-<h1>user: {{user}} </h1>
+<h1>Hello {{user.attributes.email}} user!</h1>
+<!-- <h1>user: {{user}} </h1> -->
 
 {% else %}
 <h1>Unathorised access</h1>
