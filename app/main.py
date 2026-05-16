@@ -13,14 +13,17 @@ from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials
 from app.auth import dependencies as auth_dependencies
+from app.auth.cookies import (
+    ACCESS_TOKEN_COOKIE,
+    set_access_token_cookie,
+    set_refresh_token_cookie,
+)
 from app.auth.dependencies import get_current_user
 from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
 from app.auth.middleware import RefreshTokenMiddleware
-
-REFRESH_TOKEN_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
 
 configure_logging()
 
@@ -71,13 +74,15 @@ async def root(request: Request) -> Response:
     """Render the homepage if the user has a valid token, otherwise redirect."""
 
     auth_header = request.headers.get("Authorization")
-    cookie_token = request.cookies.get("access_token")
+    cookie_token = request.cookies.get(ACCESS_TOKEN_COOKIE)
     code = request.query_params.get("code")
 
-    logger.debug("Incoming cookies: %r", dict(request.cookies))
-    logger.debug("Authorization header: %s", auth_header)
-    logger.debug("Cookie token preview: %s", f"{cookie_token[:10]}..." if cookie_token else None)
-    logger.debug("Query code: %s", code)
+    logger.debug(
+        "Auth request received: has_authorization=%s has_access_cookie=%s has_code=%s",
+        bool(auth_header),
+        bool(cookie_token),
+        bool(code),
+    )
 
     if auth_dependencies.LOCAL_AUTH_ENABLED:
         return templates.TemplateResponse(
@@ -95,22 +100,10 @@ async def root(request: Request) -> Response:
             raise RuntimeError("Cognito did not return an access or ID token")
 
         redirect = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
-        secure_flag = request.url.scheme == "https"
-        redirect.set_cookie(
-            key="access_token",
-            value=access_token,
-            httponly=True,
-            secure=secure_flag,
-        )
+        set_access_token_cookie(redirect, request, access_token)
         if refresh_token:
-            redirect.set_cookie(
-                key="refresh_token",
-                value=refresh_token,
-                httponly=True,
-                secure=secure_flag,
-                max_age=REFRESH_TOKEN_MAX_AGE,
-            )
-        logger.debug("Setting access_token cookie, secure=%s", secure_flag)
+            set_refresh_token_cookie(redirect, request, refresh_token)
+        logger.debug("Cognito callback exchanged code and set auth cookies")
         return redirect
 
     # If we have credentials in header or cookie, validate and show home
@@ -133,7 +126,7 @@ async def root(request: Request) -> Response:
                     status_code=status.HTTP_307_TEMPORARY_REDIRECT,
                 )
 
-        logger.debug("User payload from token: %r", user)
+        logger.debug("Authenticated homepage request for sub=%s", user.get("sub") if user else None)
         # TemplateResponse now expects the request first
         return templates.TemplateResponse(request, "home.html", {"user": user})
 

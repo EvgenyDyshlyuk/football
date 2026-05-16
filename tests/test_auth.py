@@ -6,6 +6,7 @@ from jose import jwt
 import base64
 import importlib
 import pytest
+from starlette.requests import Request
 
 os.environ.setdefault("AWS_REGION", "eu-west-2")
 os.environ.setdefault("COGNITO_USER_POOL_ID", "dummy_pool")
@@ -100,12 +101,25 @@ def test_callback_flow(monkeypatch):
     assert cookie == "jwt1"
     # Cookie should not include Secure flag when STAGE is local
     set_cookie_header = resp.headers.get("set-cookie", "")
+    assert "HttpOnly" in set_cookie_header
+    assert "SameSite=lax" in set_cookie_header
     assert "Secure" not in set_cookie_header
 
     client.cookies.set("access_token", cookie)
     resp2 = client.get("/")
     assert resp2.status_code == 200
     assert "u1" in resp2.text
+
+
+def test_logout_clears_auth_cookies():
+    resp = client.get("/auth/logout", follow_redirects=False)
+    set_cookie_headers = resp.headers.get_list("set-cookie")
+
+    assert resp.status_code == 307
+    assert any("access_token=" in header for header in set_cookie_headers)
+    assert any("refresh_token=" in header for header in set_cookie_headers)
+    assert all("HttpOnly" in header for header in set_cookie_headers)
+    assert all("SameSite=lax" in header for header in set_cookie_headers)
 
 
 def test_get_current_user_valid(monkeypatch):
@@ -135,10 +149,17 @@ def test_get_current_user_valid(monkeypatch):
         algorithm="HS256",
         headers={"kid": "test"},
     )
-    from starlette.requests import Request
 
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
-    request = Request(scope={"type": "http", "headers": []})
+    request = Request(
+        scope={
+            "type": "http",
+            "scheme": "http",
+            "server": ("testserver", 80),
+            "path": "/",
+            "headers": [],
+        }
+    )
     payload = dependencies.get_current_user(request=request, token=creds)
     assert payload["sub"] == "u1"
 
@@ -163,9 +184,34 @@ def test_get_current_user_invalid(monkeypatch):
 
     token = jwt.encode({"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]},
                        "wrong", algorithm="HS256", headers={"kid": "test"})
-    from starlette.requests import Request
 
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
     request = Request(scope={"type": "http", "headers": []})
     with pytest.raises(Exception):
         dependencies.get_current_user(request=request, token=creds)
+
+
+def test_secure_cookies_enabled_outside_local(monkeypatch):
+    import app.auth.cookies as auth_cookies
+
+    monkeypatch.setattr(auth_cookies, "STAGE", "prod")
+    request = Request(scope={"type": "http", "headers": []})
+
+    assert auth_cookies.use_secure_cookies(request)
+
+
+def test_secure_cookies_enabled_for_forwarded_https(monkeypatch):
+    import app.auth.cookies as auth_cookies
+
+    monkeypatch.setattr(auth_cookies, "STAGE", "local")
+    request = Request(
+        scope={
+            "type": "http",
+            "scheme": "http",
+            "server": ("testserver", 80),
+            "path": "/",
+            "headers": [(b"x-forwarded-proto", b"https")],
+        }
+    )
+
+    assert auth_cookies.use_secure_cookies(request)

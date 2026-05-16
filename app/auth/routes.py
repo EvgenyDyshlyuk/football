@@ -4,6 +4,7 @@ import logging
 from fastapi import APIRouter, Request, status
 from fastapi.responses import RedirectResponse, Response as FastAPIResponse
 
+from app.auth.cookies import delete_auth_cookies
 from app.config import (
     COGNITO_AUTH_URL,
     COGNITO_AUTH_URL_BASE,
@@ -26,7 +27,7 @@ async def get_login(request: Request) -> FastAPIResponse:
     if LOCAL_AUTH_ENABLED:
         return RedirectResponse(url="/", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
-    logger.debug("Redirecting to Cognito login; existing cookies: %r", dict(request.cookies))
+    logger.debug("Redirecting to Cognito login")
     return RedirectResponse(url=COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 
@@ -39,8 +40,6 @@ async def logout(request: Request) -> FastAPIResponse:
     logout_url = COGNITO_AUTH_URL_BASE.replace("/login", "/logout")
     logout_url += f"?client_id={COGNITO_CLIENT_ID}&logout_uri={COGNITO_REDIRECT_URI}"
     resp = RedirectResponse(url=logout_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
-    secure_flag = request.url.scheme == "https"
-    resp.delete_cookie("access_token", httponly=True, secure=secure_flag)
-    resp.delete_cookie("refresh_token", httponly=True, secure=secure_flag)
+    delete_auth_cookies(resp, request)
     logger.debug("User logged out, cookies cleared")
     return resp

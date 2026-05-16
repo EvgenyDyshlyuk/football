@@ -80,21 +80,21 @@ def fetch_user_attributes(username: str) -> Dict[str, Any]:
             Username=username,
         )
     except ClientError:
-        logger.exception("Failed to fetch attributes for %s", username)
+        logger.exception("Failed to fetch Cognito user attributes")
         return {}
 
     attrs = {
         attr["Name"]: attr["Value"]
         for attr in resp.get("UserAttributes", [])  # safe because default is []
     }
-    logger.debug("Fetched attributes for %s: %r", username, attrs)
+    logger.debug("Fetched Cognito user attributes: keys=%s", sorted(attrs))
     return attrs
 
 
 # ─── EXCHANGE CODE FOR TOKENS ─────────────────────────────────────────────────
 
 def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
-    """Exchange an OAuth `code` for tokens via Cognito, with robust debug/error output."""
+    """Exchange an OAuth `code` for tokens via Cognito."""
 
     # Validate imported config values
     _missing = [
@@ -125,8 +125,7 @@ def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
         "redirect_uri": redirect_uri,
     }
 
-    logger.debug("Token request URL: %s", token_url)
-    logger.debug("Token request payload: %r", payload)
+    logger.debug("Exchanging Cognito authorization code")
 
     resp: requests.Response | None = None
     try:
@@ -138,33 +137,20 @@ def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
             timeout=10,
         )
 
-        logger.debug("HTTP %s received", resp.status_code)
-        logger.debug("Response headers: %r", resp.headers)
-        logger.debug("Raw response body: %s", resp.text)
-
         resp.raise_for_status()
 
         tokens = resp.json()
-        logger.info("Token exchange succeeded, keys: %s", list(tokens.keys()))
+        logger.info("Token exchange succeeded")
         return tokens
 
     except HTTPError as http_err:
         response = http_err.response or resp
         status_code = response.status_code if response else "N/A"
 
-        if response is not None:
-            try:
-                body = response.json()
-            except Exception:
-                body = response.text
-        else:
-            body = "<no response>"
-
         logger.error(
-            "HTTPError during token exchange (status=%s): %s\nResponse body: %r",
+            "HTTPError during token exchange (status=%s): %s",
             status_code,
             http_err,
-            body,
         )
         raise
 
@@ -203,7 +189,7 @@ def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
         "refresh_token": refresh_token,
     }
 
-    logger.debug("Refresh token request payload: %r", payload)
+    logger.debug("Refreshing Cognito access token")
 
     resp: requests.Response | None = None
     try:
@@ -217,24 +203,15 @@ def refresh_access_token(refresh_token: str) -> Dict[str, Any]:
 
         resp.raise_for_status()
         tokens = resp.json()
-        logger.info("Refresh token succeeded, keys: %s", list(tokens.keys()))
+        logger.info("Refresh token succeeded")
         return tokens
     except HTTPError as http_err:
         response = http_err.response or resp
         status_code = response.status_code if response else "N/A"
-        body: Any
-        if response is not None:
-            try:
-                body = response.json()
-            except Exception:
-                body = response.text
-        else:
-            body = "<no response>"
         logger.error(
-            "HTTPError during token refresh (status=%s): %s\nResponse body: %r",
+            "HTTPError during token refresh (status=%s): %s",
             status_code,
             http_err,
-            body,
         )
         raise
     except RequestException as req_err:

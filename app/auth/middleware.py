@@ -10,6 +10,7 @@ from fastapi import Request, Response
 from jose import JWTError, jwt
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from .cookies import ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE, set_access_token_cookie
 from .cognito import refresh_access_token
 
 logger = logging.getLogger(__name__)
@@ -25,8 +26,8 @@ class RefreshTokenMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
     ) -> Response:
-        token = request.cookies.get("access_token")
-        refresh_token = request.cookies.get("refresh_token")
+        token = request.cookies.get(ACCESS_TOKEN_COOKIE)
+        refresh_token = request.cookies.get(REFRESH_TOKEN_COOKIE)
         new_access: str | None = None
 
         if token:
@@ -46,6 +47,5 @@ class RefreshTokenMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
         new_access = getattr(request.state, "new_access_token", new_access)
         if new_access:
-            secure = request.url.scheme == "https"
-            response.set_cookie("access_token", new_access, httponly=True, secure=secure)
+            set_access_token_cookie(response, request, new_access)
         return response
