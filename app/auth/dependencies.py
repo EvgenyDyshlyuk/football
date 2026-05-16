@@ -16,6 +16,11 @@ from app.config import (
     COGNITO_APP_CLIENT_ID,
     COGNITO_REGION,
     COGNITO_USER_POOL_ID,
+    LOCAL_AUTH_EMAIL,
+    LOCAL_AUTH_ENABLED,
+    LOCAL_AUTH_NICKNAME,
+    LOCAL_AUTH_SUB,
+    LOCAL_AUTH_USERNAME,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,17 +50,39 @@ def get_jwks() -> Dict[str, Any]:
         )
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
+
+
+def get_local_user() -> Dict[str, Any]:
+    """Return the configured local development user."""
+    return {
+        "sub": LOCAL_AUTH_SUB,
+        "username": LOCAL_AUTH_USERNAME,
+        "email": LOCAL_AUTH_EMAIL,
+        "attributes": {
+            "email": LOCAL_AUTH_EMAIL,
+            "nickname": LOCAL_AUTH_NICKNAME,
+        },
+    }
 
 
 def get_current_user(
     request: Request,
-    token: HTTPAuthorizationCredentials = Depends(security),
+    token: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> Dict[str, Any]:
     """Validate the Cognito JWT from the Authorization header or cookie.
 
     Returns the decoded JWT payload with user attributes, or raises HTTPException.
     """
+    if LOCAL_AUTH_ENABLED:
+        return get_local_user()
+
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+        )
+
     credentials = token.credentials
     header: Dict[str, Any] = {}
 

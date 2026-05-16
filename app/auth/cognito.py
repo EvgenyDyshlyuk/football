@@ -17,6 +17,7 @@ from app.config import (
     COGNITO_APP_CLIENT_SECRET,
     COGNITO_AUTH_URL_BASE,
     COGNITO_REDIRECT_URI,
+    LOCAL_AUTH_ENABLED,
 )
 
 logger = logging.getLogger(__name__)
@@ -36,13 +37,13 @@ _missing_top = [
     ]
     if not val
 ]
-if _missing_top:
+if _missing_top and not LOCAL_AUTH_ENABLED:
     raise RuntimeError(f"Missing environment variables: {', '.join(_missing_top)}")
 
 # Narrowed, non‐None locals for boto3 client and admin auth calls
-_aws_region: str = AWS_REGION  # type: ignore[assignment]
-_cognito_user_pool_id: str = COGNITO_USER_POOL_ID  # type: ignore[assignment]
-_cognito_idp_client_id: str = COGNITO_CLIENT_ID  # type: ignore[assignment]
+_aws_region = AWS_REGION or ""
+_cognito_user_pool_id = COGNITO_USER_POOL_ID or ""
+_cognito_idp_client_id = COGNITO_CLIENT_ID or ""
 
 @lru_cache(maxsize=1)
 def get_cognito_client():

@@ -40,4 +40,19 @@ or that Poetry and Node are installed.
    poetry run uvicorn app.main:app --reload --log-level debug
    ```
 
+## Local Auth Bypass
+For local development, the app supports a dummy authenticated user so agents do not need real Cognito credentials.
+This is controlled by `.env` and only works when `STAGE=local`:
+
+```bash
+LOCAL_AUTH_ENABLED=true
+LOCAL_AUTH_SUB=local-test-user
+LOCAL_AUTH_EMAIL=test-codex@example.com
+LOCAL_AUTH_USERNAME=test-codex@example.com
+LOCAL_AUTH_NICKNAME=Codex Test
+```
+
+When this is enabled, `/`, `/settings`, `/auth/login`, and `/auth/logout` use the dummy local user.
+Never enable `LOCAL_AUTH_ENABLED` outside local development.
+
 Keep commits focused and run the commands above to ensure code quality.

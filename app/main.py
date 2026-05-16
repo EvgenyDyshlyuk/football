@@ -13,8 +13,8 @@ from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials
 from app.auth import dependencies as auth_dependencies
-from app.auth.routes import auth_router
 from app.auth.dependencies import get_current_user
+from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
@@ -79,6 +79,13 @@ async def root(request: Request) -> Response:
     logger.debug("Cookie token preview: %s", f"{cookie_token[:10]}..." if cookie_token else None)
     logger.debug("Query code: %s", code)
 
+    if auth_dependencies.LOCAL_AUTH_ENABLED:
+        return templates.TemplateResponse(
+            request,
+            "home.html",
+            {"user": auth_dependencies.get_local_user()},
+        )
+
     # If Cognito redirected back with a code, exchange and set cookie
     if code:
         tokens = exchange_code_for_tokens(code)
@@ -137,9 +144,14 @@ async def root(request: Request) -> Response:
 @app.get("/settings", include_in_schema=False)
 async def get_settings(request: Request, user: Dict[str, Any] = Depends(get_current_user)) -> Response:
     """Render the user settings form populated from API Gateway."""
-    settings = {}
+    settings = {
+        "nickname": user.get("attributes", {}).get("nickname", ""),
+        "preferred_class": "",
+    } if auth_dependencies.LOCAL_AUTH_ENABLED else {}
+
     try:
-        settings = fetch_user_settings(user["sub"])
+        if not auth_dependencies.LOCAL_AUTH_ENABLED:
+            settings = fetch_user_settings(user["sub"])
     except Exception:
         logger.exception("Failed to fetch user settings")
 
@@ -159,7 +171,8 @@ async def post_settings(
 ) -> Response:
     """Save settings via API Gateway then redirect back."""
     try:
-        save_user_settings(user["sub"], nickname, preferred_class)
+        if not auth_dependencies.LOCAL_AUTH_ENABLED:
+            save_user_settings(user["sub"], nickname, preferred_class)
     except Exception:
         logger.exception("Failed to save user settings")
 

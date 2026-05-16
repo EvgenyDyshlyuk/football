@@ -18,6 +18,23 @@ Copy `.env.template` to `.env` and replace the placeholder Cognito values with y
 At a minimum `COGNITO_CLIENT_ID`, `COGNITO_AUTH_URL_BASE`, `COGNITO_SCOPE`, and `COGNITO_REDIRECT_URI`
 must be provided or the application will not start.
 
+## Local Auth Bypass
+For local UI and settings development, you can use a dummy user instead of signing in through Cognito.
+This only works when `STAGE=local`.
+
+Set these values in `.env`:
+
+```bash
+LOCAL_AUTH_ENABLED=true
+LOCAL_AUTH_SUB=local-test-user
+LOCAL_AUTH_EMAIL=test-codex@example.com
+LOCAL_AUTH_USERNAME=test-codex@example.com
+LOCAL_AUTH_NICKNAME=Codex Test
+```
+
+With local auth enabled, `/`, `/settings`, `/auth/login`, and `/auth/logout` use the dummy user locally.
+Do not enable this outside local development.
+
 ## Testing
 poetry run pytest
 poetry run ruff check .
