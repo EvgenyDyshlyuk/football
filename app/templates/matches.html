@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Matches{% endblock %}
+
+{% block content %}
+<section class="max-w-md mx-auto p-4 space-y-4">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Matches</h1>
+    </div>
+
+    <form method="post" class="bg-white border border-gray-200 rounded p-4 shadow space-y-4">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+
+        <div>
+            <label for="title" class="block font-bold mb-1">Match title</label>
+            <input type="text" id="title" name="title" maxlength="80" required class="w-full border rounded p-2" />
+        </div>
+
+        <div>
+            <label for="starts_at" class="block font-bold mb-1">Date and time</label>
+            <input type="datetime-local" id="starts_at" name="starts_at" required class="w-full border rounded p-2" />
+        </div>
+
+        <div>
+            <label for="location" class="block font-bold mb-1">Location</label>
+            <input type="text" id="location" name="location" maxlength="120" required class="w-full border rounded p-2" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label for="class_from" class="block font-bold mb-1">From class</label>
+                <select id="class_from" name="class_from" class="w-full border rounded p-2">
+                    {% for value, label in class_options %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="class_to" class="block font-bold mb-1">To class</label>
+                <select id="class_to" name="class_to" class="w-full border rounded p-2">
+                    {% for value, label in class_options %}
+                    <option value="{{ value }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label for="max_players" class="block font-bold mb-1">Max players</label>
+            <input type="number" id="max_players" name="max_players" min="2" max="40" value="10" required class="w-full border rounded p-2" />
+        </div>
+
+        <div>
+            <label for="notes" class="block font-bold mb-1">Notes</label>
+            <textarea id="notes" name="notes" maxlength="300" rows="3" class="w-full border rounded p-2"></textarea>
+        </div>
+
+        <div class="text-right">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded font-bold">Create match</button>
+        </div>
+    </form>
+
+    <div class="space-y-3">
+        {% if matches %}
+            {% for match in matches %}
+            <article class="bg-white border border-gray-200 rounded p-4 shadow">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900">{{ match.title }}</h2>
+                        <p class="text-sm text-gray-600">{{ match.starts_at_label }}</p>
+                    </div>
+                    <span class="text-xs font-bold text-gray-700 bg-gray-100 rounded px-2 py-1">{{ match.max_players }} players</span>
+                </div>
+                <dl class="mt-3 space-y-1 text-sm text-gray-700">
+                    <div class="flex gap-2">
+                        <dt class="font-bold">Place</dt>
+                        <dd>{{ match.location }}</dd>
+                    </div>
+                    <div class="flex gap-2">
+                        <dt class="font-bold">Classes</dt>
+                        <dd>{{ match.class_range_label }}</dd>
+                    </div>
+                </dl>
+                {% if match.notes %}
+                <p class="mt-3 text-sm text-gray-600">{{ match.notes }}</p>
+                {% endif %}
+            </article>
+            {% endfor %}
+        {% else %}
+        <div class="bg-white border border-gray-200 rounded p-4 text-sm text-gray-600 shadow">
+            No matches yet.
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

@@ -20,6 +20,7 @@ from app.config import COGNITO_AUTH_URL
 from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
 from app.auth.middleware import RefreshTokenMiddleware
+from app.routes.matches import matches_router
 from app.routes.settings import settings_router
 
 configure_logging()
@@ -41,6 +42,7 @@ app.mount(
 
 # Include your Cognito-based auth routes at /auth
 app.include_router(auth_router)
+app.include_router(matches_router)
 app.include_router(settings_router)
 
 
