@@ -30,3 +30,6 @@ def configure_logging() -> None:
         root_logger.setLevel(level)
     else:
         logging.basicConfig(level=level, format="[%(asctime)s] %(levelname)s %(name)s: %(message)s")
+
+    for noisy_logger in ("boto3", "botocore", "s3transfer", "urllib3", "python_multipart"):
+        logging.getLogger(noisy_logger).setLevel(logging.WARNING)
