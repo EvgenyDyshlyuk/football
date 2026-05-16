@@ -6,7 +6,7 @@
     <link href="/static/css/tailwind.css" rel="stylesheet">
     <script src="/static/js/alpine.js"></script>
 </head>
-<body class="bg-gray-100 {% block body_class %}{% endblock %}">
+<body class="bg-green-200 {% block body_class %}{% endblock %}">
     <main class="pb-20">
         {% block content %}{% endblock %}
     </main>
@@ -22,10 +22,12 @@
             <a href="/matches" class="flex flex-1 flex-col items-center justify-center gap-1 text-center text-gray-700">
                 <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="9"></circle>
-                    <path d="M12 3v18"></path>
-                    <path d="M3 12h18"></path>
-                    <path d="M5.6 5.6l12.8 12.8"></path>
-                    <path d="M18.4 5.6L5.6 18.4"></path>
+                    <path d="M12 8.3l3.2 2.3-1.2 3.8h-4l-1.2-3.8L12 8.3z"></path>
+                    <path d="M12 8.3V3"></path>
+                    <path d="M15.2 10.6l5-1.6"></path>
+                    <path d="M14 14.4l3.1 4.3"></path>
+                    <path d="M10 14.4l-3.1 4.3"></path>
+                    <path d="M8.8 10.6l-5-1.6"></path>
                 </svg>
                 <span class="text-xs leading-none">Matches</span>
             </a>
