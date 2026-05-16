@@ -12,6 +12,7 @@ from fastapi import Depends, FastAPI, Form, Request, status
 from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials
+from app.auth import dependencies as auth_dependencies
 from app.auth.routes import auth_router
 from app.auth.dependencies import get_current_user
 from app.config import COGNITO_AUTH_URL
@@ -116,9 +117,9 @@ async def root(request: Request) -> Response:
         if token:
             creds = HTTPAuthorizationCredentials(scheme=scheme, credentials=token)
             try:
-                user = get_current_user(request=request, token=creds)
+                user = auth_dependencies.get_current_user(request=request, token=creds)
             except TypeError:
-                user = get_current_user(token=creds)
+                user = auth_dependencies.get_current_user(token=creds)
             except Exception:
                 return RedirectResponse(
                     COGNITO_AUTH_URL,

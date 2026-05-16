@@ -2,6 +2,7 @@
 
 import os
 import logging
+from functools import lru_cache
 from typing import Any, Dict, Optional
 
 import requests
@@ -43,8 +44,10 @@ _aws_region: str = AWS_REGION  # type: ignore[assignment]
 _cognito_user_pool_id: str = COGNITO_USER_POOL_ID  # type: ignore[assignment]
 _cognito_idp_client_id: str = COGNITO_CLIENT_ID  # type: ignore[assignment]
 
-# Boto3 client for user‐pool operations
-client = boto3.client("cognito-idp", region_name=_aws_region)
+@lru_cache(maxsize=1)
+def get_cognito_client():
+    """Create the Cognito client only when an AWS call is actually needed."""
+    return boto3.client("cognito-idp", region_name=_aws_region)
 
 
 # ─── USERNAME/PASSWORD AUTH ────────────────────────────────────────────────────
@@ -55,7 +58,7 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
     Returns the `AuthenticationResult` dict or None on failure.
     """
     try:
-        resp = client.initiate_auth(
+        resp = get_cognito_client().initiate_auth(
             AuthFlow="ADMIN_NO_SRP_AUTH",
             AuthParameters={"USERNAME": username, "PASSWORD": password},
             ClientId=_cognito_idp_client_id,
@@ -71,7 +74,7 @@ def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
 def fetch_user_attributes(username: str) -> Dict[str, Any]:
     """Retrieve a user's attributes from Cognito using their username."""
     try:
-        resp = client.admin_get_user(
+        resp = get_cognito_client().admin_get_user(
             UserPoolId=_cognito_user_pool_id,
             Username=username,
         )
