@@ -21,6 +21,7 @@ from app.auth.cookies import (
 from app.auth.dependencies import get_current_user
 from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
+from app.csrf import get_or_create_csrf_token, set_csrf_cookie, validate_csrf_token
 from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
 from app.auth.middleware import RefreshTokenMiddleware
@@ -148,11 +149,14 @@ async def get_settings(request: Request, user: Dict[str, Any] = Depends(get_curr
     except Exception:
         logger.exception("Failed to fetch user settings")
 
-    return templates.TemplateResponse(
+    csrf_token = get_or_create_csrf_token(request)
+    response = templates.TemplateResponse(
         request,
         "settings.html",
-        {"user": user, "settings": settings},
+        {"user": user, "settings": settings, "csrf_token": csrf_token},
     )
+    set_csrf_cookie(response, request, csrf_token)
+    return response
 
 
 @app.post("/settings", include_in_schema=False)
@@ -160,9 +164,12 @@ async def post_settings(
     request: Request,
     nickname: str = Form(...),
     preferred_class: str = Form(...),
+    csrf_token: str = Form(""),
     user: Dict[str, Any] = Depends(get_current_user),
 ) -> Response:
     """Save settings via API Gateway then redirect back."""
+    validate_csrf_token(request, csrf_token)
+
     try:
         if not auth_dependencies.LOCAL_AUTH_ENABLED:
             save_user_settings(user["sub"], nickname, preferred_class)

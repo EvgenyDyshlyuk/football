@@ -4,6 +4,7 @@
 <div class="max-w-md mx-auto bg-white p-4 mt-4 rounded shadow">
     <h1 class="text-xl mb-4">User Settings</h1>
     <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <div class="mb-4">
             <label for="nickname" class="block font-bold mb-1">User nickname</label>
             <input type="text" id="nickname" name="nickname" maxlength="30" value="{{ settings.nickname or '' }}" class="w-full border rounded p-2" />
