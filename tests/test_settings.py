@@ -14,7 +14,7 @@ os.environ.setdefault("COGNITO_SCOPE", "openid+profile")
 
 from app.csrf import CSRF_COOKIE  # noqa: E402
 from app.main import app  # noqa: E402
-import app.main as app_main  # noqa: E402
+from app.routes import settings as settings_routes  # noqa: E402
 
 client = TestClient(app)
 
@@ -23,7 +23,7 @@ client = TestClient(app)
 def reset_app_state(monkeypatch):
     app.dependency_overrides = {}
     client.cookies.clear()
-    monkeypatch.setattr(app_main.auth_dependencies, "LOCAL_AUTH_ENABLED", False)
+    monkeypatch.setattr(settings_routes.auth_dependencies, "LOCAL_AUTH_ENABLED", False)
     yield
     app.dependency_overrides = {}
     client.cookies.clear()
@@ -31,14 +31,14 @@ def reset_app_state(monkeypatch):
 
 @pytest.fixture
 def authenticated_user():
-    app.dependency_overrides[app_main.get_current_user] = (
+    app.dependency_overrides[settings_routes.get_current_user] = (
         lambda token=None, request=None: {"sub": "u1", "username": "u1", "attributes": {}}
     )
 
 
 def test_settings_page_sets_csrf_cookie(monkeypatch, authenticated_user):
     monkeypatch.setattr(
-        app_main,
+        settings_routes,
         "fetch_user_settings",
         lambda sub: {"nickname": "nick", "preferred_class": "1"},
     )
@@ -70,12 +70,12 @@ def test_settings_post_saves_with_valid_csrf(monkeypatch, authenticated_user):
     saved_settings = []
 
     monkeypatch.setattr(
-        app_main,
+        settings_routes,
         "fetch_user_settings",
         lambda sub: {"nickname": "nick", "preferred_class": "1"},
     )
     monkeypatch.setattr(
-        app_main,
+        settings_routes,
         "save_user_settings",
         lambda sub, nickname, preferred_class: saved_settings.append(
             (sub, nickname, preferred_class)

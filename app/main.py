@@ -3,12 +3,9 @@
 from pathlib import Path
 
 import logging
-import os
-from typing import Any, Dict
 
-import requests
 from app.logger import configure_logging
-from fastapi import Depends, FastAPI, Form, Request, status
+from fastapi import FastAPI, Request, status
 from fastapi.responses import RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPAuthorizationCredentials
@@ -18,40 +15,16 @@ from app.auth.cookies import (
     set_access_token_cookie,
     set_refresh_token_cookie,
 )
-from app.auth.dependencies import get_current_user
 from app.auth.routes import auth_router
 from app.config import COGNITO_AUTH_URL
-from app.csrf import get_or_create_csrf_token, set_csrf_cookie, validate_csrf_token
 from app.jinja2_env import templates
 from app.auth.cognito import exchange_code_for_tokens
 from app.auth.middleware import RefreshTokenMiddleware
+from app.routes.settings import settings_router
 
 configure_logging()
 
 logger = logging.getLogger(__name__)
-
-# API Gateway configuration
-AWS_REGION = os.getenv("AWS_REGION", "eu-west-2")
-API_GATEWAY_ID = os.getenv("API_GATEWAY_ID")
-
-def _api_base() -> str:
-    if not API_GATEWAY_ID:
-        raise RuntimeError("API_GATEWAY_ID environment variable is not set")
-    return f"https://{API_GATEWAY_ID}.execute-api.{AWS_REGION}.amazonaws.com"
-
-def fetch_user_settings(sub: str) -> Dict[str, Any]:
-    url = f"{_api_base()}/user/{sub}"
-    resp = requests.get(url, timeout=10)
-    if resp.status_code == 404:
-        return {}
-    resp.raise_for_status()
-    return resp.json()
-
-def save_user_settings(sub: str, nickname: str, preferred_class: str) -> None:
-    url = f"{_api_base()}/user/{sub}"
-    payload = {"nickname": nickname, "preferred_class": preferred_class}
-    resp = requests.post(url, json=payload, timeout=10)
-    resp.raise_for_status()
 
 # Determine this file’s parent dir (i.e. the "app/" folder)
 BASE_DIR = Path(__file__).parent
@@ -68,6 +41,7 @@ app.mount(
 
 # Include your Cognito-based auth routes at /auth
 app.include_router(auth_router)
+app.include_router(settings_router)
 
 
 @app.get("/", include_in_schema=False)
@@ -133,47 +107,3 @@ async def root(request: Request) -> Response:
 
     # No code, no creds → start login
     return RedirectResponse(COGNITO_AUTH_URL, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
-
-
-@app.get("/settings", include_in_schema=False)
-async def get_settings(request: Request, user: Dict[str, Any] = Depends(get_current_user)) -> Response:
-    """Render the user settings form populated from API Gateway."""
-    settings = {
-        "nickname": user.get("attributes", {}).get("nickname", ""),
-        "preferred_class": "",
-    } if auth_dependencies.LOCAL_AUTH_ENABLED else {}
-
-    try:
-        if not auth_dependencies.LOCAL_AUTH_ENABLED:
-            settings = fetch_user_settings(user["sub"])
-    except Exception:
-        logger.exception("Failed to fetch user settings")
-
-    csrf_token = get_or_create_csrf_token(request)
-    response = templates.TemplateResponse(
-        request,
-        "settings.html",
-        {"user": user, "settings": settings, "csrf_token": csrf_token},
-    )
-    set_csrf_cookie(response, request, csrf_token)
-    return response
-
-
-@app.post("/settings", include_in_schema=False)
-async def post_settings(
-    request: Request,
-    nickname: str = Form(...),
-    preferred_class: str = Form(...),
-    csrf_token: str = Form(""),
-    user: Dict[str, Any] = Depends(get_current_user),
-) -> Response:
-    """Save settings via API Gateway then redirect back."""
-    validate_csrf_token(request, csrf_token)
-
-    try:
-        if not auth_dependencies.LOCAL_AUTH_ENABLED:
-            save_user_settings(user["sub"], nickname, preferred_class)
-    except Exception:
-        logger.exception("Failed to save user settings")
-
-    return RedirectResponse("/settings", status_code=status.HTTP_303_SEE_OTHER)
