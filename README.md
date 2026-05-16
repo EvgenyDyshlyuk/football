@@ -1,6 +1,6 @@
 # Football App
 
-A simple football application that allows users to register, login, and manage their favorite teams.
+A simple football application that allows users to register, login, and organise local football matches between each other.
 
 This is stage-by-stage implementataion of a football application using FastAPI, AWS Cognito for authentication.
 
