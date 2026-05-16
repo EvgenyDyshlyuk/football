@@ -13,6 +13,7 @@ from app.csrf import get_or_create_csrf_token, set_csrf_cookie, validate_csrf_to
 from app.jinja2_env import templates
 from app.services.matches import (
     CLASS_OPTIONS,
+    MatchStorageError,
     create_match,
     format_class,
     list_matches,
@@ -29,15 +30,27 @@ async def get_matches(
     """Render the match list and creation form."""
     csrf_token = get_or_create_csrf_token(request)
     class_options = [(value, format_class(value)) for value in CLASS_OPTIONS]
+    storage_error = None
+    response_status = status.HTTP_200_OK
+
+    try:
+        matches = list_matches()
+    except MatchStorageError as exc:
+        matches = []
+        storage_error = str(exc)
+        response_status = status.HTTP_503_SERVICE_UNAVAILABLE
+
     response = templates.TemplateResponse(
         request,
         "matches.html",
         {
             "user": user,
-            "matches": list_matches(),
+            "matches": matches,
             "class_options": class_options,
             "csrf_token": csrf_token,
+            "storage_error": storage_error,
         },
+        status_code=response_status,
     )
     set_csrf_cookie(response, request, csrf_token)
     return response
@@ -74,6 +87,11 @@ async def post_match(
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except MatchStorageError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=str(exc),
         ) from exc
 

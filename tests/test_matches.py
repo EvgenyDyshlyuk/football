@@ -24,11 +24,11 @@ client = TestClient(app)
 def reset_app_state():
     app.dependency_overrides = {}
     client.cookies.clear()
-    match_service.clear_matches()
+    match_service.set_match_repository(match_service.InMemoryMatchRepository())
     yield
     app.dependency_overrides = {}
     client.cookies.clear()
-    match_service.clear_matches()
+    match_service.set_match_repository(None)
 
 
 @pytest.fixture
@@ -119,3 +119,93 @@ def test_match_create_rejects_invalid_class_range(authenticated_user):
 
     assert resp.status_code == 400
     assert match_service.list_matches() == []
+
+
+def test_matches_page_reports_unconfigured_storage(monkeypatch, authenticated_user):
+    match_service.set_match_repository(None)
+    monkeypatch.setattr(match_service, "MATCHES_TABLE_NAME", None)
+    monkeypatch.setattr(match_service, "MATCHES_USE_MEMORY", False)
+
+    resp = client.get("/matches", headers={"Authorization": "Bearer t"})
+
+    assert resp.status_code == 503
+    assert "Match storage is unavailable." in resp.text
+    assert "Match storage is not configured" in resp.text
+    assert "Create match" not in resp.text
+
+
+def test_match_create_reports_storage_failure(monkeypatch, authenticated_user):
+    get_resp = client.get("/matches", headers={"Authorization": "Bearer t"})
+    csrf_token = get_resp.cookies.get(CSRF_COOKIE)
+    monkeypatch.setattr(
+        matches_routes,
+        "create_match",
+        lambda **kwargs: (_ for _ in ()).throw(
+            match_service.MatchStorageError("Unable to save match")
+        ),
+    )
+
+    resp = client.post(
+        "/matches",
+        data={
+            "title": "After school five-a-side",
+            "starts_at": "2026-06-01T16:00",
+            "location": "Park pitch",
+            "class_from": "2",
+            "class_to": "4",
+            "max_players": "10",
+            "csrf_token": csrf_token,
+        },
+        headers={"Authorization": "Bearer t"},
+    )
+
+    assert resp.status_code == 503
+    assert resp.json()["detail"] == "Unable to save match"
+
+
+def test_dynamodb_repository_stores_match_items():
+    class FakeTable:
+        def __init__(self):
+            self.items = []
+
+        def put_item(self, Item):
+            self.items.append(Item)
+
+        def query(self, **kwargs):
+            return {"Items": self.items}
+
+    table = FakeTable()
+    repository = match_service.DynamoDBMatchRepository(table)
+    match = match_service.Match(
+        id="",
+        creator_sub="u1",
+        title="After school five-a-side",
+        starts_at=match_service.datetime.fromisoformat("2026-06-01T16:00"),
+        location="Park pitch",
+        class_from="2",
+        class_to="4",
+        max_players=10,
+        notes="Bring water",
+    )
+
+    created = repository.create(match)
+    listed = repository.list()
+
+    assert created.id
+    assert listed == [created]
+    assert table.items[0]["PK"] == "MATCH"
+    assert table.items[0]["SK"] == f"START#2026-06-01T16:00:00#{created.id}"
+    assert table.items[0]["GSI1PK"] == "USER#u1"
+    assert table.items[0]["GSI1SK"] == table.items[0]["SK"]
+
+
+def test_match_repository_requires_explicit_backend(monkeypatch):
+    match_service.set_match_repository(None)
+    monkeypatch.setattr(match_service, "MATCHES_TABLE_NAME", None)
+    monkeypatch.setattr(match_service, "MATCHES_USE_MEMORY", False)
+
+    with pytest.raises(
+        match_service.MatchStorageNotConfiguredError,
+        match="Match storage is not configured",
+    ):
+        match_service.get_match_repository()

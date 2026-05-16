@@ -8,6 +8,12 @@
         <h1 class="text-2xl font-bold text-gray-900">Matches</h1>
     </div>
 
+    {% if storage_error %}
+    <div class="bg-white border border-gray-200 rounded p-4 text-sm text-gray-700 shadow">
+        <p class="font-bold text-gray-900">Match storage is unavailable.</p>
+        <p class="mt-3">{{ storage_error }}</p>
+    </div>
+    {% else %}
     <form method="post" class="bg-white border border-gray-200 rounded p-4 shadow space-y-4">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
 
@@ -59,6 +65,7 @@
             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded font-bold">Create match</button>
         </div>
     </form>
+    {% endif %}
 
     <div class="space-y-3">
         {% if matches %}

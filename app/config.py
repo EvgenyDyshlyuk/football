@@ -27,6 +27,7 @@ LOCAL_AUTH_USERNAME = os.getenv("LOCAL_AUTH_USERNAME", LOCAL_AUTH_EMAIL)
 LOCAL_AUTH_NICKNAME = os.getenv("LOCAL_AUTH_NICKNAME", "Codex Test")
 
 # Basic AWS/Cognito settings
+AWS_REGION = os.getenv("AWS_REGION", "eu-west-2")
 COGNITO_REGION = os.getenv("COGNITO_REGION") or os.getenv("AWS_REGION")
 COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
 COGNITO_APP_CLIENT_ID = os.getenv("COGNITO_APP_CLIENT_ID")
@@ -37,6 +38,10 @@ COGNITO_AUTH_URL_BASE = os.getenv("COGNITO_AUTH_URL_BASE")
 COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 COGNITO_SCOPE = os.getenv("COGNITO_SCOPE")
 COGNITO_REDIRECT_URI = os.getenv("COGNITO_REDIRECT_URI")
+
+# DynamoDB tables
+MATCHES_TABLE_NAME = os.getenv("MATCHES_TABLE_NAME")
+MATCHES_USE_MEMORY = STAGE == "local" and _is_enabled(os.getenv("MATCHES_USE_MEMORY"))
 
 _missing = [
     name
@@ -53,6 +58,9 @@ _missing = [
 ]
 if _missing and not LOCAL_AUTH_ENABLED:
     raise RuntimeError(f"Missing environment variables: {', '.join(_missing)}")
+
+if STAGE != "local" and not MATCHES_TABLE_NAME:
+    raise RuntimeError("MATCHES_TABLE_NAME must be set outside local development")
 
 # Separatly ensure the redirect URI is properly encoded for URL usage to make pylance happy
 if not COGNITO_REDIRECT_URI and not LOCAL_AUTH_ENABLED:

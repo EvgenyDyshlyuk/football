@@ -7,8 +7,11 @@ or that Poetry and Node are installed.
 ## Directory Overview
 - `app/` - FastAPI application code
 - `app/auth/` - Cognito-based authentication helpers and routes
+- `app/routes/` - HTTP route modules
+- `app/services/` - business logic and external persistence clients
 - `app/templates/` - Jinja2 templates
 - `app/static/` - Static assets (CSS/JS) built via Tailwind
+- `infra/` - AWS infrastructure templates
 - `tests/` - Pytest test suite
 - `.env.template` - Example environment configuration values
 
@@ -37,8 +40,36 @@ or that Poetry and Node are installed.
 
 4. **Run the development server** with:
    ```bash
-   poetry run uvicorn app.main:app --reload --log-level debug
+   LOCAL_AUTH_ENABLED=true MATCHES_TABLE_NAME=football-matches-dev poetry run uvicorn app.main:app --reload --log-level debug --port 8001
    ```
+
+   For local UI-only work without DynamoDB, explicitly set `MATCHES_USE_MEMORY=true`.
+   This is only for `STAGE=local`; do not use memory storage in production-like runs.
+
+## DynamoDB Match Storage
+Match persistence uses DynamoDB when `MATCHES_TABLE_NAME` is set. Tests inject an
+in-memory repository explicitly; the application should not silently fall back to
+memory storage for real runtime paths.
+
+Matches table schema:
+
+```text
+PK  string partition key
+SK  string sort key
+GSI1PK string partition key for GSI1
+GSI1SK string sort key for GSI1
+```
+
+Match items use:
+
+```text
+PK          MATCH
+SK          START#<starts_at_iso>#<match_id>
+GSI1PK      USER#<creator_sub>
+GSI1SK      START#<starts_at_iso>#<match_id>
+```
+
+Use `infra/dynamodb-matches-table.yaml` to create the table shape.
 
 ## Local Auth Bypass
 For local development, the app supports a dummy authenticated user so agents do not need real Cognito credentials.
@@ -52,7 +83,7 @@ LOCAL_AUTH_USERNAME=test-codex@example.com
 LOCAL_AUTH_NICKNAME=Codex Test
 ```
 
-When this is enabled, `/`, `/settings`, `/auth/login`, and `/auth/logout` use the dummy local user.
+When this is enabled, `/`, `/matches`, `/settings`, `/auth/login`, and `/auth/logout` use the dummy local user.
 Never enable `LOCAL_AUTH_ENABLED` outside local development.
 
 Keep commits focused and run the commands above to ensure code quality.
