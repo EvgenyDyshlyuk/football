@@ -12,7 +12,7 @@ STAGE = os.getenv("STAGE", "local")
 
 # Automatically load a local .env file when running in development.
 if STAGE == "local":
-    load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+    load_dotenv(Path(__file__).resolve().parents[1] / ".env", override=True)
 
 
 def _is_enabled(value: str | None) -> bool:
@@ -35,7 +35,6 @@ COGNITO_APP_CLIENT_SECRET = os.getenv("COGNITO_APP_CLIENT_SECRET")
 
 # OAuth related values
 COGNITO_AUTH_URL_BASE = os.getenv("COGNITO_AUTH_URL_BASE")
-COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
 COGNITO_SCOPE = os.getenv("COGNITO_SCOPE")
 COGNITO_REDIRECT_URI = os.getenv("COGNITO_REDIRECT_URI")
 
@@ -50,7 +49,6 @@ _missing = [
         ("COGNITO_USER_POOL_ID", COGNITO_USER_POOL_ID),
         ("COGNITO_APP_CLIENT_ID", COGNITO_APP_CLIENT_ID),
         ("COGNITO_AUTH_URL_BASE", COGNITO_AUTH_URL_BASE),
-        ("COGNITO_CLIENT_ID", COGNITO_CLIENT_ID),
         ("COGNITO_SCOPE", COGNITO_SCOPE),
         ("COGNITO_REDIRECT_URI", COGNITO_REDIRECT_URI),
     ]
@@ -67,10 +65,10 @@ if not COGNITO_REDIRECT_URI and not LOCAL_AUTH_ENABLED:
     raise RuntimeError("COGNITO_REDIRECT_URI must be set in environment variables")
 
 # Construct the login URL for the Cognito Hosted UI
-if COGNITO_AUTH_URL_BASE and COGNITO_CLIENT_ID and COGNITO_SCOPE and COGNITO_REDIRECT_URI:
+if COGNITO_AUTH_URL_BASE and COGNITO_APP_CLIENT_ID and COGNITO_SCOPE and COGNITO_REDIRECT_URI:
     _encoded_redirect = quote_plus(COGNITO_REDIRECT_URI, safe="/")
     COGNITO_AUTH_URL = (
-        f"{COGNITO_AUTH_URL_BASE}?client_id={COGNITO_CLIENT_ID}&response_type=code"
+        f"{COGNITO_AUTH_URL_BASE}?client_id={COGNITO_APP_CLIENT_ID}&response_type=code"
         f"&scope={COGNITO_SCOPE}&redirect_uri={_encoded_redirect}"
     )
 else:

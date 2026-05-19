@@ -37,10 +37,9 @@ COGNITO_REGION=eu-west-2
 COGNITO_USER_POOL_ID=...
 COGNITO_APP_CLIENT_ID=...
 COGNITO_APP_CLIENT_SECRET=...
-COGNITO_CLIENT_ID=...
 COGNITO_AUTH_URL_BASE=https://.../login
 COGNITO_SCOPE=email+openid+phone
-COGNITO_REDIRECT_URI=http://localhost:8001/
+COGNITO_REDIRECT_URI=http://localhost:8000/
 MATCHES_TABLE_NAME=football-matches-dev
 ```
 
@@ -103,15 +102,15 @@ A starter CloudFormation template is available at
 Preferred local development uses real AWS dev resources:
 
 ```bash
-LOCAL_AUTH_ENABLED=true MATCHES_TABLE_NAME=football-matches-dev poetry run uvicorn app.main:app --reload --log-level debug --port 8001
+poetry run uvicorn app.main:app --reload --log-level debug
 ```
 
 Then open:
 
 ```text
-http://127.0.0.1:8001/
-http://127.0.0.1:8001/matches
-http://127.0.0.1:8001/settings
+http://127.0.0.1:8000/
+http://127.0.0.1:8000/matches
+http://127.0.0.1:8000/settings
 ```
 
 For local-only UI work without DynamoDB, explicitly set:

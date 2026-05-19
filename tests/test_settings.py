@@ -5,7 +5,6 @@ from fastapi.testclient import TestClient
 
 os.environ.setdefault("AWS_REGION", "eu-west-2")
 os.environ.setdefault("COGNITO_USER_POOL_ID", "dummy_pool")
-os.environ.setdefault("COGNITO_CLIENT_ID", "dummy_client")
 os.environ.setdefault("COGNITO_APP_CLIENT_ID", "dummy_client")
 os.environ.setdefault("COGNITO_APP_CLIENT_SECRET", "dummy_secret")
 os.environ.setdefault("COGNITO_REDIRECT_URI", "http://testserver/")

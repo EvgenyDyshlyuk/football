@@ -6,9 +6,9 @@ from fastapi.responses import RedirectResponse, Response as FastAPIResponse
 
 from app.auth.cookies import delete_auth_cookies
 from app.config import (
+    COGNITO_APP_CLIENT_ID,
     COGNITO_AUTH_URL,
     COGNITO_AUTH_URL_BASE,
-    COGNITO_CLIENT_ID,
     COGNITO_REDIRECT_URI,
     LOCAL_AUTH_ENABLED,
 )
@@ -38,7 +38,7 @@ async def logout(request: Request) -> FastAPIResponse:
         return RedirectResponse(url="/", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
     logout_url = COGNITO_AUTH_URL_BASE.replace("/login", "/logout")
-    logout_url += f"?client_id={COGNITO_CLIENT_ID}&logout_uri={COGNITO_REDIRECT_URI}"
+    logout_url += f"?client_id={COGNITO_APP_CLIENT_ID}&logout_uri={COGNITO_REDIRECT_URI}"
     resp = RedirectResponse(url=logout_url, status_code=status.HTTP_307_TEMPORARY_REDIRECT)
     delete_auth_cookies(resp, request)
     logger.debug("User logged out, cookies cleared")

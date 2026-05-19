@@ -40,7 +40,7 @@ or that Poetry and Node are installed.
 
 4. **Run the development server** with:
    ```bash
-   LOCAL_AUTH_ENABLED=true MATCHES_TABLE_NAME=football-matches-dev poetry run uvicorn app.main:app --reload --log-level debug --port 8001
+   poetry run uvicorn app.main:app --reload --log-level debug
    ```
 
    For local UI-only work without DynamoDB, explicitly set `MATCHES_USE_MEMORY=true`.

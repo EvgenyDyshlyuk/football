@@ -1,6 +1,5 @@
 """Utility functions for interacting with AWS Cognito."""
 
-import os
 import logging
 from functools import lru_cache
 from typing import Any, Dict, Optional
@@ -13,10 +12,12 @@ import boto3
 from botocore.exceptions import ClientError
 
 from app.config import (
+    AWS_REGION,
     COGNITO_APP_CLIENT_ID,
     COGNITO_APP_CLIENT_SECRET,
     COGNITO_AUTH_URL_BASE,
     COGNITO_REDIRECT_URI,
+    COGNITO_USER_POOL_ID,
     LOCAL_AUTH_ENABLED,
 )
 
@@ -24,16 +25,12 @@ logger = logging.getLogger(__name__)
 
 # ─── Top‐level ENV VAR LOAD & VALIDATION ───────────────────────────────────────
 
-AWS_REGION = os.getenv("AWS_REGION")
-COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
-COGNITO_CLIENT_ID = os.getenv("COGNITO_CLIENT_ID")
-
 _missing_top = [
     name
     for name, val in [
         ("AWS_REGION", AWS_REGION),
         ("COGNITO_USER_POOL_ID", COGNITO_USER_POOL_ID),
-        ("COGNITO_CLIENT_ID", COGNITO_CLIENT_ID),
+        ("COGNITO_APP_CLIENT_ID", COGNITO_APP_CLIENT_ID),
     ]
     if not val
 ]
@@ -43,7 +40,7 @@ if _missing_top and not LOCAL_AUTH_ENABLED:
 # Narrowed, non‐None locals for boto3 client and admin auth calls
 _aws_region = AWS_REGION or ""
 _cognito_user_pool_id = COGNITO_USER_POOL_ID or ""
-_cognito_idp_client_id = COGNITO_CLIENT_ID or ""
+_cognito_idp_client_id = COGNITO_APP_CLIENT_ID or ""
 
 @lru_cache(maxsize=1)
 def get_cognito_client():

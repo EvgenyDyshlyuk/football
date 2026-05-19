@@ -10,7 +10,6 @@ from starlette.requests import Request
 
 os.environ.setdefault("AWS_REGION", "eu-west-2")
 os.environ.setdefault("COGNITO_USER_POOL_ID", "dummy_pool")
-os.environ.setdefault("COGNITO_CLIENT_ID", "dummy_client")
 os.environ.setdefault("COGNITO_APP_CLIENT_ID", "dummy_client")
 os.environ.setdefault("COGNITO_APP_CLIENT_SECRET", "dummy_secret")
 os.environ.setdefault("COGNITO_REDIRECT_URI", "http://testserver/")
@@ -143,7 +142,7 @@ def test_get_current_user_valid(monkeypatch):
         {
             "sub": "u1",
             "username": "u1",
-            "aud": os.environ["COGNITO_CLIENT_ID"],
+            "aud": os.environ["COGNITO_APP_CLIENT_ID"],
         },
         secret,
         algorithm="HS256",
@@ -182,7 +181,7 @@ def test_get_current_user_invalid(monkeypatch):
     dependencies = importlib.import_module("app.auth.dependencies")
     monkeypatch.setattr(dependencies, "get_jwks", lambda: jwks)
 
-    token = jwt.encode({"sub": "u1", "aud": os.environ["COGNITO_CLIENT_ID"]},
+    token = jwt.encode({"sub": "u1", "aud": os.environ["COGNITO_APP_CLIENT_ID"]},
                        "wrong", algorithm="HS256", headers={"kid": "test"})
 
     creds = HTTPAuthorizationCredentials(scheme="Bearer", credentials=token)
